@@ -345,32 +345,25 @@ function portXIRR(list){
 
 // PRICES
 var AV_KEY = localStorage.getItem('av_key') || '';
+var PRICE_SERVER = 'https://price-api-eujs.onrender.com';
 
 async function fetchPrice(sym) {
   var s = norm(sym);
-  var suffixes = ['.NS', '.BO', '-SM.NS', '-SM.BO'];
-  var srcMap = {'.NS':'NSE', '.BO':'BSE', '-SM.NS':'NSE SME', '-SM.BO':'BSE SME'};
-
-  // Try Yahoo Finance direct - works from https:// pages
-  for (var si = 0; si < suffixes.length; si++) {
-    var ticker = s + suffixes[si];
-    try {
-      var r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + ticker + '?interval=1d&range=1d', {
-        signal: AbortSignal.timeout(8000),
-        headers: {'Accept': 'application/json'}
-      });
-      if (!r.ok) continue;
+  
+  // Try our Render server first - fetches Yahoo Finance server-side, no CORS
+  try {
+    var r = await fetch(PRICE_SERVER + '/prices', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({symbols: [s]}),
+      signal: AbortSignal.timeout(30000)
+    });
+    if (r.ok) {
       var j = await r.json();
-      var m = j && j.chart && j.chart.result && j.chart.result[0] && j.chart.result[0].meta;
-      if (m && m.regularMarketPrice) {
-        var prev = m.chartPreviousClose || m.regularMarketPrice;
-        return {price: m.regularMarketPrice, change: m.regularMarketPrice - prev,
-          changeP: prev ? (m.regularMarketPrice - prev) / prev * 100 : 0,
-          src: srcMap[suffixes[si]],
-          time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})};
-      }
-    } catch(e) {}
-  }
+      var p = j.prices && j.prices[s];
+      if (p && p.price) return p;
+    }
+  } catch(e) {}
 
   // Alpha Vantage fallback
   if (AV_KEY) {
@@ -393,7 +386,6 @@ async function fetchPrice(sym) {
       } catch(e) {}
     }
   }
-
   return null;
 }
 async function refreshPrices(){
@@ -401,14 +393,40 @@ async function refreshPrices(){
   if(!syms.length)return;
   var btn=document.getElementById('refresh-btn');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Fetching...';
+  document.getElementById('price-status').textContent='Fetching prices...';
+
+  // Try batch fetch from Render server first
+  try {
+    var r = await fetch(PRICE_SERVER + '/prices', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({symbols: syms}),
+      signal: AbortSignal.timeout(60000)
+    });
+    if (r.ok) {
+      var j = await r.json();
+      if (j.prices && j.count > 0) {
+        Object.entries(j.prices).forEach(function(entry) {
+          prices[norm(entry[0])] = entry[1];
+        });
+        document.getElementById('price-status').textContent = j.count + '/' + syms.length + ' prices';
+        btn.disabled=false;btn.textContent='Refresh prices';
+        renderHoldings();renderStats();updateFamilyNav();
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Fallback: fetch one by one via AV
+  document.getElementById('price-status').textContent='Trying Alpha Vantage...';
   var done=0;
-  await Promise.all(syms.map(async function(s){
-    var p=await fetchPrice(s);
-    if(p)prices[norm(s)]=p;
+  for (var i=0; i<syms.length; i++) {
+    var p=await fetchPrice(syms[i]);
+    if(p)prices[norm(syms[i])]=p;
     done++;
     document.getElementById('price-status').textContent=done+'/'+syms.length+' fetched';
-    if(document.getElementById('section-portfolio').classList.contains('active')){renderHoldings();updateFamilyNav();}
-  }));
+    renderHoldings();updateFamilyNav();
+  }
   var got=Object.keys(prices).length;
   document.getElementById('price-status').textContent=got+'/'+syms.length+' prices';
   btn.disabled=false;btn.textContent='Refresh prices';
