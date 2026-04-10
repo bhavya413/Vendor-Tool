@@ -345,90 +345,67 @@ function portXIRR(list){
 
 // PRICES
 var AV_KEY = localStorage.getItem('av_key') || '';
-var PRICE_SERVER = 'https://price-api-eujs.onrender.com';
 
-async function fetchPrice(sym) {
+async function fetchPriceAV(sym) {
+  if (!AV_KEY) return null;
   var s = norm(sym);
-  
-  // Try our Render server first - fetches Yahoo Finance server-side, no CORS
-  try {
-    var r = await fetch(PRICE_SERVER + '/prices', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({symbols: [s]}),
-      signal: AbortSignal.timeout(30000)
-    });
-    if (r.ok) {
+  // Try BSE first (covers SME stocks too), then NSE
+  for (var vi = 0; vi < 2; vi++) {
+    var variant = (vi === 0 ? 'BSE:' : 'NSE:') + s;
+    try {
+      var r = await fetch('https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol='
+        + encodeURIComponent(variant) + '&apikey=' + AV_KEY, {signal: AbortSignal.timeout(15000)});
+      if (!r.ok) continue;
       var j = await r.json();
-      var p = j.prices && j.prices[s];
-      if (p && p.price) return p;
-    }
-  } catch(e) {}
-
-  // Alpha Vantage fallback
-  if (AV_KEY) {
-    var variants = ['BSE:'+s, 'NSE:'+s];
-    for (var vi = 0; vi < variants.length; vi++) {
-      try {
-        var r2 = await fetch('https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol='
-          + encodeURIComponent(variants[vi]) + '&apikey=' + AV_KEY, {signal: AbortSignal.timeout(12000)});
-        if (!r2.ok) continue;
-        var j2 = await r2.json();
-        if (j2['Note'] || j2['Information']) continue;
-        var q = j2['Global Quote'];
-        if (q && q['05. price'] && parseFloat(q['05. price']) > 0) {
-          return {price: parseFloat(q['05. price']),
-            change: parseFloat(q['09. change']) || 0,
-            changeP: parseFloat((q['10. change percent'] || '0').replace('%','')) || 0,
-            src: variants[vi].includes('NSE') ? 'NSE' : 'BSE',
-            time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})};
-        }
-      } catch(e) {}
-    }
+      if (j['Note'] || j['Information']) return 'LIMIT';
+      var q = j['Global Quote'];
+      if (q && q['05. price'] && parseFloat(q['05. price']) > 0) {
+        return {
+          price: parseFloat(q['05. price']),
+          change: parseFloat(q['09. change']) || 0,
+          changeP: parseFloat((q['10. change percent'] || '0').replace('%','')) || 0,
+          src: vi === 1 ? 'NSE' : 'BSE',
+          time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})
+        };
+      }
+    } catch(e) {}
   }
   return null;
+}
+
+async function fetchPrice(sym) {
+  return await fetchPriceAV(sym);
 }
 async function refreshPrices(){
   var syms=[...new Set(holdings.map(function(h){return h.stock;}))];
   if(!syms.length)return;
+  if(!AV_KEY){
+    document.getElementById('price-status').textContent='Add Alpha Vantage key in sidebar';
+    return;
+  }
   var btn=document.getElementById('refresh-btn');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Fetching...';
-  document.getElementById('price-status').textContent='Fetching prices...';
-
-  // Try batch fetch from Render server first
-  try {
-    var r = await fetch(PRICE_SERVER + '/prices', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({symbols: syms}),
-      signal: AbortSignal.timeout(60000)
-    });
-    if (r.ok) {
-      var j = await r.json();
-      if (j.prices && j.count > 0) {
-        Object.entries(j.prices).forEach(function(entry) {
-          prices[norm(entry[0])] = entry[1];
-        });
-        document.getElementById('price-status').textContent = j.count + '/' + syms.length + ' prices';
-        btn.disabled=false;btn.textContent='Refresh prices';
-        renderHoldings();renderStats();updateFamilyNav();
-        return;
-      }
-    }
-  } catch(e) {}
-
-  // Fallback: fetch one by one via AV
-  document.getElementById('price-status').textContent='Trying Alpha Vantage...';
-  var done=0;
+  var done=0; var got=0;
+  // Fetch sequentially with 13 second gap - AV free = 5 calls/min
   for (var i=0; i<syms.length; i++) {
-    var p=await fetchPrice(syms[i]);
-    if(p)prices[norm(syms[i])]=p;
+    document.getElementById('price-status').textContent='Fetching '+syms[i]+'... ('+( i+1)+'/'+syms.length+')';
+    var p = await fetchPriceAV(syms[i]);
+    if (p === 'LIMIT') {
+      // Hit rate limit - wait 60 seconds and retry
+      document.getElementById('price-status').textContent='Rate limit hit, waiting 60s... ('+(i+1)+'/'+syms.length+')';
+      await new Promise(function(r){setTimeout(r, 62000);});
+      p = await fetchPriceAV(syms[i]);
+    }
+    if (p && p !== 'LIMIT') { prices[norm(syms[i])]=p; got++; }
     done++;
-    document.getElementById('price-status').textContent=done+'/'+syms.length+' fetched';
+    document.getElementById('price-status').textContent=got+' fetched... ('+(i+1)+'/'+syms.length+')';
     renderHoldings();updateFamilyNav();
+    // Wait 13 seconds between calls to stay within 5/min limit
+    if (i < syms.length - 1) {
+      await new Promise(function(r){setTimeout(r, 13000);});
+    }
   }
-  var got=Object.keys(prices).length;
-  document.getElementById('price-status').textContent=got+'/'+syms.length+' prices';
+  document.getElementById('price-status').textContent=got+'/'+syms.length+' prices done';
   btn.disabled=false;btn.textContent='Refresh prices';
   renderHoldings();renderStats();updateFamilyNav();
 }
