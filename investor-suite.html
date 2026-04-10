@@ -621,12 +621,32 @@ async function refreshPrices(){
 // ─── PARSE ────────────────────────────────────────────────────────────────────
 function parseZerodha(data){
   const txns=[];let hi=-1;
-  for(let i=0;i<data.length;i++){if(data[i][1]==='Symbol'){hi=i;break;}}
-  if(hi<0)return txns;
+  for(let i=0;i<data.length;i++){
+    // Find header row - Symbol is in column index 1
+    const row=data[i];
+    if(row&&(row[1]==='Symbol'||String(row[1]||'').trim()==='Symbol')){hi=i;break;}
+  }
+  if(hi<0){
+    // Fallback: scan for any row with 'symbol' in it
+    for(let i=0;i<data.length;i++){
+      const flat=data[i].join(',').toLowerCase();
+      if(flat.includes('symbol')&&flat.includes('trade type')){hi=i;break;}
+    }
+  }
+  if(hi<0) return txns;
   for(let i=hi+1;i<data.length;i++){
-    const r=data[i];const sym=r[1];const date=r[3];const type=r[7];const qty=parseFloat(r[9])||0;const price=parseFloat(r[10])||0;
-    if(!sym||!date||!type||!qty||!price)continue;
-    txns.push({stock:normSym(String(sym)),date:new Date(date),type:String(type).toLowerCase().includes('buy')?'BUY':'SELL',qty,price,value:qty*price});
+    const r=data[i];
+    if(!r||r.every(v=>v===null||v===undefined||v==='')) continue;
+    const sym=r[1]; const date=r[3]; const type=r[7];
+    const qty=parseFloat(String(r[9]||'').replace(/,/g,''))||0;
+    const price=parseFloat(String(r[10]||'').replace(/,/g,''))||0;
+    if(!sym||!date||!type||!qty||!price) continue;
+    // Handle date - could be string 'YYYY-MM-DD' or Date object
+    let d;
+    if(date instanceof Date) d=date;
+    else{ d=new Date(String(date)); if(isNaN(d.getTime())) d=new Date(String(date).replace(/-/g,'/')); }
+    if(isNaN(d.getTime())) continue;
+    txns.push({stock:normSym(String(sym)),date:d,type:String(type).toLowerCase().includes('buy')?'BUY':'SELL',qty,price,value:qty*price});
   }
   return txns;
 }
@@ -680,7 +700,7 @@ function readFile(file,broker){
       try{
         const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
         const ws=wb.Sheets[wb.SheetNames[0]];
-        const data=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'yyyy-mm-dd'});
+        const data=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
         let txns=[];
         if(broker==='zerodha')txns=parseZerodha(data);
         else if(broker==='hdfcsec')txns=parseHDFC(data);
