@@ -213,6 +213,14 @@ tbody tr.clickable{cursor:pointer}
       Report Builder
     </div>
   </div>
+  <div style="padding:1rem 1.25rem;border-top:1px solid var(--border);margin-top:auto">
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">API Key</div>
+    <div style="position:relative">
+      <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." style="width:100%;padding:7px 32px 7px 9px;font-size:11px;font-family:monospace;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg2);color:var(--text);outline:none" oninput="saveApiKey(this.value)">
+      <button onclick="toggleApiKeyVisibility()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:0;font-size:12px" id="api-eye">👁</button>
+    </div>
+    <div id="api-status" style="font-size:10px;margin-top:4px;color:var(--text3)">Not set</div>
+  </div>
 </div>
 
 <!-- ═══ MAIN ══════════════════════════════════════════════════════════════ -->
@@ -544,7 +552,9 @@ function updateFamilyNav(){
 
 // ─── Claude API ───────────────────────────────────────────────────────────────
 async function callClaude(messages,system,onChunk){
-  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,stream:true,system,messages})});
+  const key=localStorage.getItem('inv_api_key')||'';
+  if(!key){throw new Error('No API key set — add your Anthropic API key in the sidebar');}
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,stream:true,system,messages})});
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API error');}
   const reader=res.body.getReader();const dec=new TextDecoder();let full='';
   while(true){const{done,value}=await reader.read();if(done)break;for(const line of dec.decode(value).split('\n').filter(l=>l.startsWith('data: '))){const d=line.slice(6);if(d==='[DONE]')continue;try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;onChunk(full);}}catch(e){}}}
@@ -1159,10 +1169,39 @@ function renderRpFileList(){
     </div>`).join('');
 }
 
+// ─── API KEY ──────────────────────────────────────────────────────────────────
+function saveApiKey(val){
+  const trimmed = val.trim();
+  if(trimmed){
+    localStorage.setItem('inv_api_key', trimmed);
+    document.getElementById('api-status').textContent = 'Saved';
+    document.getElementById('api-status').style.color = 'var(--green-text)';
+  } else {
+    localStorage.removeItem('inv_api_key');
+    document.getElementById('api-status').textContent = 'Not set';
+    document.getElementById('api-status').style.color = 'var(--text3)';
+  }
+}
+function toggleApiKeyVisibility(){
+  const inp = document.getElementById('api-key-input');
+  const eye = document.getElementById('api-eye');
+  if(inp.type==='password'){inp.type='text';eye.textContent='🙈';}
+  else{inp.type='password';eye.textContent='👁';}
+}
+function initApiKey(){
+  const saved = localStorage.getItem('inv_api_key');
+  if(saved){
+    document.getElementById('api-key-input').value = saved;
+    document.getElementById('api-status').textContent = 'Key saved ✓';
+    document.getElementById('api-status').style.color = 'var(--green-text)';
+  }
+}
+
 // ─── Init ──────────────────────────────────────────────────────────────────────
 renderFamilies();
 updateFamilyNav();
 updateBulkFamilyDropdown();
+initApiKey();
 </script>
 </body>
 </html>
