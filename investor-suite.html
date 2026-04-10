@@ -686,14 +686,26 @@ function readFile(file,broker){
 // ─── BUILD ────────────────────────────────────────────────────────────────────
 async function buildAll(){
   const all=families.flatMap((f,fi)=>f.accounts.map((a,ai)=>({...a,family:f.name,fi,ai})));
-  const withFiles=all.filter(a=>a.file);
+  const withFiles=all.filter(a=>a.file||(a.files&&a.files.length));
   if(!withFiles.length){alert('Upload at least one broker statement first');return;}
   const btn=document.getElementById('build-btn');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Building…';
   const allTxns=[];
   for(const acct of withFiles){
-    const txns=await readFile(acct.file,acct.broker);
-    txns.forEach(t=>allTxns.push({...t,family:acct.family,account:acct.name,broker:acct.broker}));
+    const filesToProcess = acct.files && acct.files.length ? acct.files : [acct.file];
+    for(const file of filesToProcess){
+      if(!file) continue;
+      // Auto-detect broker per file if account broker is 'other'
+      let broker = acct.broker;
+      if(broker==='other'){
+        const fn=file.name.toLowerCase();
+        if(fn.includes('tradebook')||fn.includes('zerodha')) broker='zerodha';
+        else if(fn.includes('hdfc')) broker='hdfcsec';
+        else if(fn.includes('icici')||fn.includes('orderlog')) broker='icicisec';
+      }
+      const txns=await readFile(file, broker);
+      txns.forEach(t=>allTxns.push({...t,family:acct.family,account:acct.name,broker}));
+    }
   }
   const stockMap={};
   allTxns.forEach(t=>{
@@ -851,7 +863,26 @@ function saveAccount(){
 function deleteFamily(i){if(!confirm('Delete '+families[i].name+'?'))return;families.splice(i,1);saveState();renderFamilies();updateFamilyNav();}
 function deleteAccount(fi,ai){families[fi].accounts.splice(ai,1);saveState();renderFamilies();}
 function toggleFamily(i){families[i].collapsed=!families[i].collapsed;renderFamilies();}
-function handlePortFile(fi,ai,input){const f=input.files[0];if(!f)return;families[fi].accounts[ai].fileName=f.name;families[fi].accounts[ai].file=f;renderFamilies();}
+function handlePortFiles(fi,ai,input){
+  const newFiles=[...input.files];if(!newFiles.length)return;
+  if(!families[fi].accounts[ai].files) families[fi].accounts[ai].files=[];
+  newFiles.forEach(f=>{
+    if(!families[fi].accounts[ai].files.find(x=>x.name===f.name)){
+      families[fi].accounts[ai].files.push(f);
+    }
+  });
+  // Keep legacy single-file fields for backward compat
+  families[fi].accounts[ai].file=families[fi].accounts[ai].files[0];
+  families[fi].accounts[ai].fileName=families[fi].accounts[ai].files[0]?.name||null;
+  input.value='';
+  renderFamilies();
+}
+function removePortFile(fi,ai,fIdx){
+  families[fi].accounts[ai].files.splice(fIdx,1);
+  families[fi].accounts[ai].file=families[fi].accounts[ai].files[0]||null;
+  families[fi].accounts[ai].fileName=families[fi].accounts[ai].files[0]?.name||null;
+  renderFamilies();
+}
 
 function clearAll(){
   if(!confirm('This will delete all families, accounts and data. Are you sure?'))return;
@@ -888,18 +919,24 @@ function renderFamilies(){
       ${!f.collapsed?`<div class="family-body">
         ${!f.accounts.length?'<div style="font-size:12px;color:var(--text3);text-align:center;padding:.5rem">No accounts yet — click + Account to add</div>':''}
         ${f.accounts.map((a,ai)=>`
-          <div class="acct-card">
-            <div>
-              <div class="acct-name">${a.name}</div>
+          <div class="acct-card" style="flex-direction:column;align-items:stretch;gap:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div>
+                <div class="acct-name">${a.name}</div>
               <div class="acct-broker-tag">${BROKERS[a.broker]||a.broker}${a.clientId?' · '+a.clientId:''}</div>
             </div>
             <div style="display:flex;gap:6px;align-items:center">
-              <div class="upload-btn ${a.fileName?'uploaded':''}" onclick="document.getElementById('pf-${fi}-${ai}').click()">
-                <input type="file" id="pf-${fi}-${ai}" accept=".csv,.xlsx,.xls" style="display:none" onchange="handlePortFile(${fi},${ai},this)">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                ${a.fileName||'Upload statement'}
+              <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-weight:500;color:var(--text2);background:var(--bg);transition:all .12s;white-space:nowrap">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Upload files
+                  <input type="file" id="pf-${fi}-${ai}" accept=".csv,.xlsx,.xls" multiple style="display:none" onchange="handlePortFiles(${fi},${ai},this)">
+                </label>
+                <button class="btn btn-sm btn-danger" onclick="deleteAccount(${fi},${ai})">X</button>
               </div>
-              <button class="btn btn-sm btn-danger" onclick="deleteAccount(${fi},${ai})">✕</button>
+            </div>
+            <div id="pf-log-${fi}-${ai}" style="${(a.files&&a.files.length)?'':'display:none'}">
+              <div style="display:flex;flex-wrap:wrap;gap:5px">${(a.files||[]).map((f,fIdx)=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--green-dim);border:1px solid var(--green);border-radius:20px;font-size:11px;color:var(--green-text)">${f.name.length>30?f.name.slice(0,27)+'...':f.name}<button onclick="removePortFile(${fi},${ai},${fIdx})" style="background:none;border:none;cursor:pointer;color:var(--green-text);padding:0;font-size:11px;margin-left:3px">X</button></span>`).join('')}</div>
+            </div>
             </div>
           </div>`).join('')}
       </div>`:''}
