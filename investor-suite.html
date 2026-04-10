@@ -511,6 +511,8 @@ let currentFilter='all';
 let currentFamilyIdx=-1;
 let ccFileData=null;
 const BROKERS={zerodha:'Zerodha',hdfcsec:'HDFC Sec',icicisec:'ICICI Sec',other:'Other'};
+// Live file store — File objects can't be serialized, keep them here
+const liveFiles={}; // key: 'fi-ai-filename' -> File object
 function saveState(){localStorage.setItem('inv3_fam',JSON.stringify(families));}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
@@ -718,27 +720,26 @@ function readFile(file,broker){
 // ─── BUILD ────────────────────────────────────────────────────────────────────
 async function buildAll(){
   const all=families.flatMap((f,fi)=>f.accounts.map((a,ai)=>({...a,family:f.name,fi,ai})));
-  const withFiles=all.filter(a=>a.file||(a.files&&a.files.length));
+  const withFiles=all.filter(a=>{
+    const keys=Object.keys(liveFiles).filter(k=>k.startsWith(a.fi+'-'+a.ai+'-'));
+    return keys.length>0;
+  });
   if(!withFiles.length){alert('Upload at least one broker statement first');return;}
   const btn=document.getElementById('build-btn');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Building…';
   const allTxns=[];
 
   for(const acct of withFiles){
-    const filesToProcess = acct.files && acct.files.length ? acct.files : [acct.file];
-    for(const file of filesToProcess){
+    const fileKeys=Object.keys(liveFiles).filter(k=>k.startsWith(acct.fi+'-'+acct.ai+'-'));
+    for(const key of fileKeys){
+      const file=liveFiles[key];
       if(!file) continue;
-      let broker = acct.broker;
-      if(broker==='other'){
-        const fn=file.name.toLowerCase();
-        if(fn.includes('tradebook')||fn.includes('zerodha')) broker='zerodha';
-        else if(fn.includes('hdfc')) broker='hdfcsec';
-        else if(fn.includes('icici')||fn.includes('orderlog')) broker='icicisec';
-      }
-      const txns=await readFile(file, broker);
-      const buys=txns.filter(t=>t.type==='BUY').length;
-      const sells=txns.filter(t=>t.type==='SELL').length;
-
+      let broker=acct.broker;
+      const fn=file.name.toLowerCase();
+      if(fn.includes('tradebook')||fn.includes('zerodha')) broker='zerodha';
+      else if(fn.includes('hdfc')) broker='hdfcsec';
+      else if(fn.includes('icici')||fn.includes('orderlog')) broker='icicisec';
+      const txns=await readFile(file,broker);
       txns.forEach(t=>allTxns.push({...t,family:acct.family,account:acct.name,broker}));
     }
   }
@@ -891,22 +892,28 @@ function deleteAccount(fi,ai){families[fi].accounts.splice(ai,1);saveState();ren
 function toggleFamily(i){families[i].collapsed=!families[i].collapsed;renderFamilies();}
 function handlePortFiles(fi,ai,input){
   const newFiles=[...input.files];if(!newFiles.length)return;
-  if(!families[fi].accounts[ai].files) families[fi].accounts[ai].files=[];
+  if(!families[fi].accounts[ai].fileNames) families[fi].accounts[ai].fileNames=[];
   newFiles.forEach(f=>{
-    if(!families[fi].accounts[ai].files.find(x=>x.name===f.name)){
-      families[fi].accounts[ai].files.push(f);
+    if(!families[fi].accounts[ai].fileNames.includes(f.name)){
+      families[fi].accounts[ai].fileNames.push(f.name);
+      liveFiles[fi+'-'+ai+'-'+f.name]=f;
     }
   });
-  // Keep legacy single-file fields for backward compat
-  families[fi].accounts[ai].file=families[fi].accounts[ai].files[0];
-  families[fi].accounts[ai].fileName=families[fi].accounts[ai].files[0]?.name||null;
+  // Keep legacy fields
+  families[fi].accounts[ai].fileName=families[fi].accounts[ai].fileNames[0]||null;
+  // Store files array for display (non-serializable, just for current session)
+  families[fi].accounts[ai].files=(families[fi].accounts[ai].fileNames||[]).map(n=>({name:n}));
+  saveState();
   input.value='';
   renderFamilies();
 }
 function removePortFile(fi,ai,fIdx){
-  families[fi].accounts[ai].files.splice(fIdx,1);
-  families[fi].accounts[ai].file=families[fi].accounts[ai].files[0]||null;
-  families[fi].accounts[ai].fileName=families[fi].accounts[ai].files[0]?.name||null;
+  const name=families[fi].accounts[ai].fileNames[fIdx];
+  delete liveFiles[fi+'-'+ai+'-'+name];
+  families[fi].accounts[ai].fileNames.splice(fIdx,1);
+  families[fi].accounts[ai].files=(families[fi].accounts[ai].fileNames||[]).map(n=>({name:n}));
+  families[fi].accounts[ai].fileName=families[fi].accounts[ai].fileNames[0]||null;
+  saveState();
   renderFamilies();
 }
 
