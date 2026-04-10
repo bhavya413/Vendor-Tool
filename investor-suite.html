@@ -1,1215 +1,2145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Investor Suite</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#ffffff;--bg2:#f8f9fb;--bg3:#f1f3f7;--bg4:#e8eaef;
-  --text:#0f1117;--text2:#4a5062;--text3:#9399a8;
-  --border:#e4e6ed;--border2:#d0d3de;
-  --green:#00a87a;--green-dim:#e8f7f3;--green-text:#007a5a;
-  --amber:#d97706;--amber-dim:#fef3c7;
-  --red:#dc2626;--red-dim:#fef2f2;
-  --blue:#2563eb;--blue-dim:#eff6ff;
-  --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04);
-  --radius:8px;--radius-sm:6px;--radius-lg:12px;
-}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:var(--bg2)}
-::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:8px}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investor Suite</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+    *, * ::before, * ::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0
+    }
 
-/* LAYOUT */
-.shell{display:flex;min-height:100vh}
-.sidebar{width:228px;background:var(--bg);border-right:1px solid var(--border);padding:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;overflow-y:auto}
-.main{margin-left:228px;flex:1;padding:2rem 2.5rem;max-width:1180px}
+    :root {
+        --bg: #ffffff;
+        --bg2: #f8f9fb;
+        --bg3: #f1f3f7;
+        --bg4: #e8eaef;
+        --text: #0f1117;
+        --text2: #4a5062;
+        --text3: #9399a8;
+        --border: #e4e6ed;
+        --border2: #d0d3de;
+        --green: #00a87a;
+        --green-dim: #e8f7f3;
+        --green-text: #007a5a;
+        --amber: #d97706;
+        --amber-dim: #fef3c7;
+        --red: #dc2626;
+        --red-dim: #fef2f2;
+        --blue: #2563eb;
+        --blue-dim: #eff6ff;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+        --radius: 8px;
+        --radius-sm: 6px;
+        --radius-lg: 12px;
+    }
 
-/* SIDEBAR */
-.sidebar-logo{padding:1.5rem 1.25rem 1.25rem;border-bottom:1px solid var(--border)}
-.sidebar-logo-mark{width:32px;height:32px;background:var(--text);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:.625rem}
-.sidebar-logo-mark svg{width:16px;height:16px;fill:#fff}
-.sidebar-logo-name{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.02em}
-.sidebar-logo-sub{font-size:11px;color:var(--text3);margin-top:1px}
-.nav-group{padding:.75rem 0}
-.nav-group-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:0 1.25rem .375rem}
-.nav-item{display:flex;align-items:center;gap:9px;padding:7px 1.25rem;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .12s;border-radius:0;position:relative}
-.nav-item:hover{color:var(--text);background:var(--bg2)}
-.nav-item.active{color:var(--green-text);background:var(--green-dim)}
-.nav-item.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--green);border-radius:0 2px 2px 0}
-.nav-item.sub{padding-left:2.5rem;font-size:12px}
-.nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.6}
-.nav-item.active .nav-icon{opacity:1}
-.nav-divider{height:1px;background:var(--border);margin:.5rem 1.25rem}
+    body {
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        font-size: 14px;
+        line-height: 1.5
+    }
 
-/* SECTIONS */
-.section{display:none}.section.active{display:block}
-.page-header{margin-bottom:1.75rem}
-.page-title{font-size:20px;font-weight:600;letter-spacing:-.02em;color:var(--text)}
-.page-sub{font-size:13px;color:var(--text3);margin-top:3px}
+    ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px
+    }
 
-/* CARDS */
-.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
-.card-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1rem}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+    ::-webkit-scrollbar-track {
+        background: var(--bg2)
+    }
 
-/* FORMS */
-label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:5px}
-input[type=text],input[type=number],select,textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 11px;font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s}
-input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,168,122,.1)}
-select{cursor:pointer}
-textarea{resize:vertical;min-height:120px;line-height:1.6}
-.mb{margin-bottom:1rem}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
-.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1rem}
-.form-group{margin-bottom:1rem}
+    ::-webkit-scrollbar-thumb {
+        background: var(--bg4);
+        border-radius: 8px
+    }/* LAYOUT */
+    .shell {
+        display: flex;
+        min-height: 100vh
+    }
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-size:13px;font-weight:500;border-radius:var(--radius-sm);cursor:pointer;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:inherit;transition:all .12s;white-space:nowrap}
-.btn:hover{background:var(--bg2);border-color:var(--border2)}
-.btn:active{transform:scale(.98)}
-.btn-primary{background:var(--text);color:#fff;border-color:var(--text)}
-.btn-primary:hover{background:#1a1d27;border-color:#1a1d27}
-.btn-primary:disabled{background:var(--bg3);color:var(--text3);border-color:var(--border);cursor:not-allowed;transform:none}
-.btn-green{background:var(--green);color:#fff;border-color:var(--green)}
-.btn-green:hover{background:var(--green-text);border-color:var(--green-text)}
-.btn-green:disabled{background:var(--bg3);color:var(--text3);border-color:var(--border);cursor:not-allowed;transform:none}
-.btn-sm{padding:5px 12px;font-size:12px}
-.btn-danger{color:var(--red);border-color:#fca5a5;background:#fff}
-.btn-danger:hover{background:var(--red-dim);border-color:#f87171}
-.btn-ghost{border-color:transparent;background:transparent;color:var(--text2)}
-.btn-ghost:hover{background:var(--bg2);border-color:var(--border)}
+    .sidebar {
+        width: 228px;
+        background: var(--bg);
+        border-right: 1px solid var(--border);
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 50;
+        overflow-y: auto
+    }
 
-/* BADGES */
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;line-height:1.5}
-.badge-green{background:var(--green-dim);color:var(--green-text)}
-.badge-amber{background:var(--amber-dim);color:var(--amber)}
-.badge-red{background:var(--red-dim);color:var(--red)}
-.badge-blue{background:var(--blue-dim);color:var(--blue)}
-.badge-gray{background:var(--bg3);color:var(--text2)}
+    .main {
+        margin-left: 228px;
+        flex: 1;
+        padding: 2rem 2.5rem;
+        max-width: 1180px
+    }/* SIDEBAR */
+    .sidebar-logo {
+        padding: 1.5rem 1.25rem 1.25rem;
+        border-bottom: 1px solid var(--border)
+    }
 
-/* AI OUTPUT */
-.ai-out{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;min-height:60px;font-size:13px;line-height:1.85;color:var(--text2);white-space:pre-wrap;word-break:break-word}
-.ai-out h2,.ai-out h3{color:var(--text);font-size:13px;font-weight:600;margin:1rem 0 .35rem;padding-bottom:4px;border-bottom:1px solid var(--border)}
-.ai-out h2:first-child,.ai-out h3:first-child{margin-top:0}
-.ai-out strong{color:var(--text);font-weight:600}
-.ai-out ul,.ai-out ol{padding-left:1.25rem;margin:.5rem 0}.ai-out li{margin-bottom:3px}
-.spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
-@keyframes spin{to{transform:rotate(360deg)}}
+    .sidebar-logo-mark {
+        width: 32px;
+        height: 32px;
+        background: var(--text);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: .625rem
+    }
 
-/* STATS */
-.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:1.5rem}
-.stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.875rem 1rem}
-.stat-n{font-size:19px;font-weight:600;letter-spacing:-.02em;color:var(--text);font-family:'DM Mono',monospace}
-.stat-n.pos{color:var(--green-text)}.stat-n.neg{color:var(--red)}
-.stat-l{font-size:10px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+    .sidebar-logo-mark svg {
+        width: 16px;
+        height: 16px;
+        fill: #fff
+    }
 
-/* TABLE */
-.tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-thead th{padding:9px 12px;text-align:left;font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;cursor:pointer;user-select:none}
-thead th:hover{color:var(--text)}
-tbody td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
-tbody tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:var(--bg2)}
-tbody tr.clickable{cursor:pointer}
-.pos{color:var(--green-text)}.neg{color:var(--red)}
-.mono{font-family:'DM Mono',monospace;font-size:12px}
+    .sidebar-logo-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        letter-spacing: -.02em
+    }
 
-/* FAMILY CARDS */
-.family-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:.875rem;overflow:hidden;box-shadow:var(--shadow)}
-.family-header{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;cursor:pointer;transition:background .12s}
-.family-header:hover{background:var(--bg2)}
-.family-name{font-size:14px;font-weight:600;color:var(--text)}
-.family-desc{font-size:12px;color:var(--text3);margin-top:2px}
-.family-body{padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--bg2)}
-.acct-card{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:.5rem;gap:8px;flex-wrap:wrap;box-shadow:var(--shadow)}
-.acct-name{font-size:13px;font-weight:500;color:var(--text)}
-.acct-broker-tag{font-size:11px;color:var(--text3);margin-top:2px}
-.upload-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1px dashed var(--border2);border-radius:var(--radius-sm);font-size:11px;color:var(--text3);cursor:pointer;transition:all .12s;background:var(--bg);white-space:nowrap}
-.upload-btn:hover{border-color:var(--green);color:var(--green-text);background:var(--green-dim)}
-.upload-btn.uploaded{border-style:solid;border-color:var(--green);color:var(--green-text);background:var(--green-dim)}
+    .sidebar-logo-sub {
+        font-size: 11px;
+        color: var(--text3);
+        margin-top: 1px
+    }
 
-/* MODALS */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,17,23,.4);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center;padding:1rem}
-.modal-bg.open{display:flex}
-.modal{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-md)}
-.modal-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:1.25rem}
-.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem}
+    .nav-group {
+        padding: .75rem 0
+    }
 
-/* SCORECARD */
-.score-ring{display:flex;align-items:center;gap:1.5rem;padding:1rem;background:var(--bg2);border-radius:var(--radius);margin-bottom:1rem;border:1px solid var(--border)}
-.ring-wrap{position:relative;width:76px;height:76px;flex-shrink:0}
-.ring-wrap svg{transform:rotate(-90deg)}
-.ring-score{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;font-family:'DM Mono',monospace}
+    .nav-group-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        padding: 0 1.25rem .375rem
+    }
 
-/* WEIGHT BAR */
-.wbar-bg{background:var(--bg3);border-radius:4px;height:4px;width:72px;display:inline-block;vertical-align:middle}
-.wbar{background:var(--green);border-radius:4px;height:4px}
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 7px 1.25rem;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text2);
+        cursor: pointer;
+        transition: all .12s;
+        border-radius: 0;
+        position: relative
+    }
 
-/* MISC */
-.divider{height:1px;background:var(--border);margin:1.5rem 0}
-.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px}
-.empty-state{text-align:center;padding:3rem 1rem;color:var(--text3)}
-.empty-state strong{display:block;font-size:15px;color:var(--text2);margin-bottom:6px;font-weight:500}
-.copy-btn{padding:4px 10px;font-size:11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text3);cursor:pointer;transition:all .12s;font-family:inherit}
-.copy-btn:hover{color:var(--green-text);border-color:var(--green)}
-.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;font-size:11px;color:var(--text2)}
-.search-input{padding:7px 11px;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s}
-.search-input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,168,122,.1)}
-.price-pill{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:1px 5px;border-radius:4px}
-.price-pill.up{background:var(--green-dim);color:var(--green-text)}
-.price-pill.dn{background:var(--red-dim);color:var(--red)}
-.price-pill.na{background:var(--bg3);color:var(--text3)}
+    .nav-item:hover {
+        color: var(--text);
+        background: var(--bg2)
+    }
 
-@media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:1rem}.stats-row{grid-template-columns:1fr 1fr}.row2,.row3{grid-template-columns:1fr}}
-</style>
+    .nav-item.active {
+        color: var(--green-text);
+        background: var(--green-dim)
+    }
+
+    .nav-item.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 4px;
+        bottom: 4px;
+        width: 3px;
+        background: var(--green);
+        border-radius: 0 2px 2px 0
+    }
+
+    .nav-item.sub {
+        padding-left: 2.5rem;
+        font-size: 12px
+    }
+
+    .nav-icon {
+        width: 15px;
+        height: 15px;
+        flex-shrink: 0;
+        opacity: .6
+    }
+
+    .nav-item.active .nav-icon {
+        opacity: 1
+    }
+
+    .nav-divider {
+        height: 1px;
+        background: var(--border);
+        margin: .5rem 1.25rem
+    }/* SECTIONS */
+    .section {
+        display:none
+    }
+
+    .section.active {
+        display: block
+    }
+
+    .page-header {
+        margin-bottom: 1.75rem
+    }
+
+    .page-title {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -.02em;
+        color: var(--text)
+    }
+
+    .page-sub {
+        font-size: 13px;
+        color: var(--text3);
+        margin-top: 3px
+    }/* CARDS */
+    .card {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow)
+    }
+
+    .card-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        margin-bottom: 1rem
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 8px
+    }/* FORMS */
+    label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text2);
+        display: block;
+        margin-bottom: 5px
+    }
+
+    input[type=text], input[type=number], select, textarea {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border2);
+        border-radius: var(--radius-sm);
+        padding: 8px 11px;
+        font-size: 13px;
+        color: var(--text);
+        font-family: inherit;
+        outline: none;
+        transition: border-color .15s, box-shadow .15s
+    }
+
+    input:focus, select:focus, textarea:focus {
+        border-color: var(--green);
+        box-shadow: 0 0 0 3px rgba(0, 168, 122, .1)
+    }
+
+    select {
+        cursor: pointer
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 120px;
+        line-height: 1.6
+    }
+
+    .mb {
+        margin-bottom: 1rem
+    }
+
+    .row2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 1rem
+    }
+
+    .row3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 1rem
+    }
+
+    .form-group {
+        margin-bottom: 1rem
+    }/* BUTTONS */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        border: 1px solid var(--border2);
+        background: var(--bg);
+        color: var(--text);
+        font-family: inherit;
+        transition: all .12s;
+        white-space: nowrap
+    }
+
+    .btn:hover {
+        background: var(--bg2);
+        border-color: var(--border2)
+    }
+
+    .btn:active {
+        transform: scale(.98)
+    }
+
+    .btn-primary {
+        background: var(--text);
+        color: #fff;
+        border-color: var(--text)
+    }
+
+    .btn-primary:hover {
+        background: #1a1d27;
+        border-color: #1a1d27
+    }
+
+    .btn-primary:disabled {
+        background: var(--bg3);
+        color: var(--text3);
+        border-color: var(--border);
+        cursor: not-allowed;
+        transform: none
+    }
+
+    .btn-green {
+        background: var(--green);
+        color: #fff;
+        border-color: var(--green)
+    }
+
+    .btn-green:hover {
+        background: var(--green-text);
+        border-color: var(--green-text)
+    }
+
+    .btn-green:disabled {
+        background: var(--bg3);
+        color: var(--text3);
+        border-color: var(--border);
+        cursor: not-allowed;
+        transform: none
+    }
+
+    .btn-sm {
+        padding: 5px 12px;
+        font-size: 12px
+    }
+
+    .btn-danger {
+        color: var(--red);
+        border-color: #fca5a5;
+        background: #fff
+    }
+
+    .btn-danger:hover {
+        background: var(--red-dim);
+        border-color: #f87171
+    }
+
+    .btn-ghost {
+        border-color: transparent;
+        background: transparent;
+        color: var(--text2)
+    }
+
+    .btn-ghost:hover {
+        background: var(--bg2);
+        border-color: var(--border)
+    }/* BADGES */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.5
+    }
+
+    .badge-green {
+        background: var(--green-dim);
+        color: var(--green-text)
+    }
+
+    .badge-amber {
+        background: var(--amber-dim);
+        color: var(--amber)
+    }
+
+    .badge-red {
+        background: var(--red-dim);
+        color: var(--red)
+    }
+
+    .badge-blue {
+        background: var(--blue-dim);
+        color: var(--blue)
+    }
+
+    .badge-gray {
+        background: var(--bg3);
+        color: var(--text2)
+    }/* AI OUTPUT */
+    .ai-out {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        min-height: 60px;
+        font-size: 13px;
+        line-height: 1.85;
+        color: var(--text2);
+        white-space: pre-wrap;
+        word-break: break-word
+    }
+
+    .ai-out h2, .ai-out h3 {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 600;
+        margin: 1rem 0 .35rem;
+        padding-bottom: 4px;
+        border-bottom: 1px solid var(--border)
+    }
+
+    .ai-out h2:first-child, .ai-out h3:first-child {
+        margin-top: 0
+    }
+
+    .ai-out strong {
+        color: var(--text);
+        font-weight: 600
+    }
+
+    .ai-out ul, .ai-out ol {
+        padding-left: 1.25rem;
+        margin:.5rem 0
+    }
+
+    .ai-out li {
+        margin-bottom: 3px
+    }
+
+    .spinner {
+        display: inline-block;
+        width: 13px;
+        height: 13px;
+        border: 2px solid var(--border2);
+        border-top-color: var(--green);
+        border-radius: 50%;
+        animation: spin .7s linear infinite;
+        vertical-align: middle;
+        margin-right: 6px
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg)
+        }
+    }/* STATS */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-bottom: 1.5rem
+    }
+
+    .stat-box {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: .875rem 1rem
+    }
+
+    .stat-n {
+        font-size: 19px;
+        font-weight: 600;
+        letter-spacing: -.02em;
+        color: var(--text);
+        font-family: 'DM Mono', monospace
+    }
+
+    .stat-n.pos {
+        color:var(--green-text)
+    }
+
+    .stat-n.neg {
+        color: var(--red)
+    }
+
+    .stat-l {
+        font-size: 10px;
+        color: var(--text3);
+        margin-top: 3px;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        font-weight: 500
+    }/* TABLE */
+    .tbl-wrap {
+        overflow-x: auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border)
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px
+    }
+
+    thead th {
+        padding: 9px 12px;
+        text-align: left;
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg2);
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none
+    }
+
+    thead th:hover {
+        color: var(--text)
+    }
+
+    tbody td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+        color: var(--text)
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none
+    }
+
+    tbody tr:hover td {
+        background: var(--bg2)
+    }
+
+    tbody tr.clickable {
+        cursor: pointer
+    }
+
+    .pos {
+        color:var(--green-text)
+    }
+
+    .neg {
+        color: var(--red)
+    }
+
+    .mono {
+        font-family: 'DM Mono', monospace;
+        font-size: 12px
+    }/* FAMILY CARDS */
+    .family-card {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        margin-bottom: .875rem;
+        overflow: hidden;
+        box-shadow: var(--shadow)
+    }
+
+    .family-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: .875rem 1.25rem;
+        cursor: pointer;
+        transition: background .12s
+    }
+
+    .family-header:hover {
+        background: var(--bg2)
+    }
+
+    .family-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text)
+    }
+
+    .family-desc {
+        font-size: 12px;
+        color: var(--text3);
+        margin-top: 2px
+    }
+
+    .family-body {
+        padding: 1rem 1.25rem;
+        border-top: 1px solid var(--border);
+        background: var(--bg2)
+    }
+
+    .acct-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: .75rem 1rem;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: .5rem;
+        gap: 8px;
+        flex-wrap: wrap;
+        box-shadow: var(--shadow)
+    }
+
+    .acct-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text)
+    }
+
+    .acct-broker-tag {
+        font-size: 11px;
+        color: var(--text3);
+        margin-top: 2px
+    }
+
+    .upload-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border: 1px dashed var(--border2);
+        border-radius: var(--radius-sm);
+        font-size: 11px;
+        color: var(--text3);
+        cursor: pointer;
+        transition: all .12s;
+        background: var(--bg);
+        white-space: nowrap
+    }
+
+    .upload-btn:hover {
+        border-color: var(--green);
+        color: var(--green-text);
+        background: var(--green-dim)
+    }
+
+    .upload-btn.uploaded {
+        border-style: solid;
+        border-color: var(--green);
+        color: var(--green-text);
+        background: var(--green-dim)
+    }/* MODALS */
+    .modal-bg {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 17, 23, .4);
+        backdrop-filter: blur(2px);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem
+    }
+
+    .modal-bg.open {
+        display: flex
+    }
+
+    .modal {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        width: 100%;
+        max-width: 480px;
+        max-height: 92vh;
+        overflow-y: auto;
+        box-shadow: var(--shadow-md)
+    }
+
+    .modal-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 1.25rem
+    }
+
+    .modal-btns {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 1.25rem
+    }/* SCORECARD */
+    .score-ring {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1rem;
+        background: var(--bg2);
+        border-radius: var(--radius);
+        margin-bottom: 1rem;
+        border: 1px solid var(--border)
+    }
+
+    .ring-wrap {
+        position: relative;
+        width: 76px;
+        height: 76px;
+        flex-shrink: 0
+    }
+
+    .ring-wrap svg {
+        transform: rotate(-90deg)
+    }
+
+    .ring-score {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 700;
+        font-family: 'DM Mono', monospace
+    }/* WEIGHT BAR */
+    .wbar-bg {
+        background: var(--bg3);
+        border-radius: 4px;
+        height: 4px;
+        width: 72px;
+        display: inline-block;
+        vertical-align: middle
+    }
+
+    .wbar {
+        background: var(--green);
+        border-radius: 4px;
+        height: 4px
+    }/* MISC */
+    .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 1.5rem 0
+    }
+
+    .section-hdr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+        gap: 8px
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text3)
+    }
+
+    .empty-state strong {
+        display: block;
+        font-size: 15px;
+        color: var(--text2);
+        margin-bottom: 6px;
+        font-weight: 500
+    }
+
+    .copy-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--text3);
+        cursor: pointer;
+        transition: all .12s;
+        font-family: inherit
+    }
+
+    .copy-btn:hover {
+        color: var(--green-text);
+        border-color: var(--green)
+    }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        font-size: 11px;
+        color: var(--text2)
+    }
+
+    .search-input {
+        padding: 7px 11px;
+        font-size: 13px;
+        border: 1px solid var(--border2);
+        border-radius: var(--radius-sm);
+        background: var(--bg);
+        color: var(--text);
+        font-family: inherit;
+        outline: none;
+        transition: border-color .15s, box-shadow .15s
+    }
+
+    .search-input:focus {
+        border-color: var(--green);
+        box-shadow: 0 0 0 3px rgba(0, 168, 122, .1)
+    }
+
+    .price-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 10px;
+        padding: 1px 5px;
+        border-radius: 4px
+    }
+
+    .price-pill.up {
+        background: var(--green-dim);
+        color: var(--green-text)
+    }
+
+    .price-pill.dn {
+        background: var(--red-dim);
+        color: var(--red)
+    }
+
+    .price-pill.na {
+        background: var(--bg3);
+        color: var(--text3)
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            display:none
+        }
+
+        .main {
+            margin-left: 0;
+            padding:1rem
+        }
+
+        .stats-row {
+            grid-template-columns:1fr 1fr
+        }
+
+        .row2, .row3 {
+            grid-template-columns: 1fr
+        }
+    }
+    </style>
 </head>
 <body>
-<div class="shell">
+    <div class="shell">
 
-<!-- ═══ SIDEBAR ═══════════════════════════════════════════════════════════ -->
-<div class="sidebar">
-  <div class="sidebar-logo">
-    <div class="sidebar-logo-mark">
-      <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 3h2v-2h2v2h2v2h-2v2h-2v-2h-2v-2z"/></svg>
-    </div>
-    <div class="sidebar-logo-name">Investor Suite</div>
-    <div class="sidebar-logo-sub">by Bhavs</div>
-  </div>
-
-  <div class="nav-group">
-    <div class="nav-group-label">Portfolio</div>
-    <div class="nav-item active" id="nav-setup" onclick="showSection('setup',this)">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      Setup
-    </div>
-    <div class="nav-item" id="nav-all" onclick="showPortfolio('all',this)">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      All families
-    </div>
-    <div id="family-nav"></div>
-  </div>
-
-  <div class="nav-divider"></div>
-
-  <div class="nav-group">
-    <div class="nav-group-label">Research</div>
-    <div class="nav-item" onclick="showSection('scorecard',this)">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
-      Mgmt Scorecard
-    </div>
-    <div class="nav-item" onclick="showSection('concall',this)">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-      Concall Analyser
-    </div>
-    <div class="nav-item" onclick="showSection('report',this)">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-      Report Builder
-    </div>
-  </div>
-  <div style="padding:1rem 1.25rem;border-top:1px solid var(--border);margin-top:auto">
-    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">API Key</div>
-    <div style="position:relative">
-      <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." style="width:100%;padding:7px 32px 7px 9px;font-size:11px;font-family:monospace;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg2);color:var(--text);outline:none" oninput="saveApiKey(this.value)">
-      <button onclick="toggleApiKeyVisibility()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:0;font-size:12px" id="api-eye">👁</button>
-    </div>
-    <div id="api-status" style="font-size:10px;margin-top:4px;color:var(--text3)">Not set</div>
-  </div>
-</div>
-
-<!-- ═══ MAIN ══════════════════════════════════════════════════════════════ -->
-<div class="main">
-
-<!-- SETUP -->
-<div id="section-setup" class="section active">
-  <div class="page-header">
-    <div class="page-title">Portfolio setup</div>
-    <div class="page-sub">Add families, accounts, and upload broker statements</div>
-  </div>
-  <div class="section-hdr">
-    <div id="port-summary" style="font-size:13px;color:var(--text3)"></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-sm" onclick="openFamilyModal()">+ Add family</button>
-      <button class="btn btn-sm btn-danger" onclick="clearAll()">Clear all</button>
-      <button class="btn btn-primary btn-sm" id="build-btn" onclick="buildAll()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Build portfolio
-      </button>
-    </div>
-  </div>
-  <div id="families-list"></div>
-
-  <!-- BULK UPLOAD -->
-  <div class="card" style="border:1.5px dashed var(--border2);background:var(--bg2);box-shadow:none;margin-top:.5rem">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
-      <div>
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Bulk upload statements</div>
-        <div style="font-size:12px;color:var(--text3)">Drop multiple broker files at once — broker is auto-detected from file contents</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <select id="bulk-family" style="width:160px;padding:6px 10px;font-size:12px">
-          <option value="">— assign to family —</option>
-        </select>
-        <label style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);background:var(--bg);transition:all .12s;text-transform:none;letter-spacing:0" onmouseenter="this.style.background='var(--bg2)'" onmouseleave="this.style.background='var(--bg)'">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Upload files
-          <input type="file" id="bulk-files" multiple accept=".xlsx,.xls,.csv" style="display:none" onchange="handleBulkUpload(this)">
-        </label>
-      </div>
-    </div>
-    <div id="bulk-log" style="margin-top:.875rem;display:none"></div>
-  </div>
-</div>
-
-<!-- PORTFOLIO VIEW -->
-<div id="section-portfolio" class="section">
-  <div class="section-hdr">
-    <div class="page-header" style="margin-bottom:0">
-      <div class="page-title" id="port-title">All families</div>
-      <div class="page-sub" id="port-sub"></div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <span id="price-status" style="font-size:11px;color:var(--text3)"></span>
-      <button class="btn btn-sm" onclick="refreshPrices()" id="refresh-btn">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
-        Refresh prices
-      </button>
-      <button class="btn btn-sm btn-ghost" onclick="showSection('setup',document.getElementById('nav-setup'))">← Setup</button>
-    </div>
-  </div>
-  <div class="stats-row" id="port-stats"></div>
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title" style="margin-bottom:0">Holdings <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3);font-size:11px">— click any row for transactions</span></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input class="search-input" style="width:150px" type="text" id="h-search" placeholder="Search stock..." oninput="renderTable()">
-        <select class="search-input" style="width:140px" id="h-sort" onchange="renderTable()">
-          <option value="value">Sort: Value</option>
-          <option value="pnl">Sort: P&L ₹</option>
-          <option value="pnlpct">Sort: P&L %</option>
-          <option value="weight">Sort: Weight</option>
-          <option value="xirr">Sort: XIRR</option>
-          <option value="stock">Sort: A–Z</option>
-        </select>
-      </div>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th>Stock</th><th>Qty</th><th>Avg cost</th><th>LTP</th>
-          <th>Value</th><th>Weight</th><th>P&L</th><th>P&L %</th><th>XIRR</th><th>Accounts</th>
-        </tr></thead>
-        <tbody id="h-body"></tbody>
-      </table>
-    </div>
-  </div>
-
-</div>
-
-<!-- SCORECARD -->
-<div id="section-scorecard" class="section">
-  <div class="page-header">
-    <div class="page-title">Management scorecard</div>
-    <div class="page-sub">Score any promoter across capital allocation, integrity, and execution</div>
-  </div>
-  <div class="row2">
-    <div class="form-group"><label>Company name</label><input type="text" id="sc-co" placeholder="e.g. Caplin Point Labs"></div>
-    <div class="form-group"><label>Promoter / MD</label><input type="text" id="sc-pr" placeholder="e.g. C.C. Paarthipan"></div>
-  </div>
-  <div class="card">
-    <div class="card-title">Capital allocation — 40 pts</div>
-    <div class="row3">
-      <div class="form-group"><label>ROIC trend (5yr)</label><select id="sc-roic"><option value="10">Above WACC consistently (10)</option><option value="7">Mostly above WACC (7)</option><option value="4">Mixed / declining (4)</option><option value="1">Below WACC (1)</option></select></div>
-      <div class="form-group"><label>FCF conversion</label><select id="sc-fcf"><option value="10">Strong, consistent (10)</option><option value="7">Moderate (7)</option><option value="4">Weak / lumpy (4)</option><option value="1">Negative (1)</option></select></div>
-      <div class="form-group"><label>Capex discipline</label><select id="sc-capex"><option value="10">Returns-focused (10)</option><option value="7">Reasonable (7)</option><option value="4">Aggressive / unclear (4)</option><option value="1">Empire building (1)</option></select></div>
-      <div class="form-group"><label>Dividends / buybacks</label><select id="sc-div"><option value="5">Consistent & growing (5)</option><option value="3">Occasional (3)</option><option value="1">None / erratic (1)</option></select></div>
-      <div class="form-group"><label>Acquisitions</label><select id="sc-acq"><option value="5">Value-accretive or none (5)</option><option value="3">Neutral (3)</option><option value="1">Value-destructive (1)</option></select></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">Integrity & governance — 35 pts</div>
-    <div class="row3">
-      <div class="form-group"><label>Promoter pledge</label><select id="sc-pledge"><option value="10">Zero (10)</option><option value="7">Low, declining (7)</option><option value="4">Moderate (4)</option><option value="1">High / increasing (1)</option></select></div>
-      <div class="form-group"><label>Related party txns</label><select id="sc-rpt"><option value="10">Minimal, arm's length (10)</option><option value="7">Some, disclosed (7)</option><option value="4">Significant (4)</option><option value="1">Egregious (1)</option></select></div>
-      <div class="form-group"><label>Guidance vs actuals</label><select id="sc-guid"><option value="8">Consistently beats (8)</option><option value="6">Meets guidance (6)</option><option value="3">Frequent misses (3)</option><option value="1">Unreliable (1)</option></select></div>
-      <div class="form-group"><label>Auditor quality</label><select id="sc-aud"><option value="7">Big 4, stable (7)</option><option value="5">Mid-tier, stable (5)</option><option value="2">Frequent changes (2)</option></select></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">Execution & communication — 25 pts</div>
-    <div class="row3">
-      <div class="form-group"><label>Concall quality</label><select id="sc-cc"><option value="8">Candid, detailed (8)</option><option value="5">Average (5)</option><option value="2">Evasive / scripted (2)</option></select></div>
-      <div class="form-group"><label>Minority treatment</label><select id="sc-min"><option value="9">Aligned, fair (9)</option><option value="6">Neutral (6)</option><option value="2">Extractive (2)</option></select></div>
-      <div class="form-group"><label>Skin in the game</label><select id="sc-skin"><option value="8">High holding, buying (8)</option><option value="5">Moderate (5)</option><option value="2">Selling / low (2)</option></select></div>
-    </div>
-  </div>
-  <div class="form-group"><label>Additional context (optional)</label><textarea id="sc-ctx" placeholder="Any notes, red flags, recent news about management..."></textarea></div>
-  <button class="btn btn-primary" id="sc-btn" onclick="runScorecard()">Generate scorecard</button>
-  <div id="sc-out" style="display:none;margin-top:1.5rem">
-    <div class="card">
-      <div class="score-ring">
-        <div class="ring-wrap">
-          <svg width="76" height="76" viewBox="0 0 76 76"><circle cx="38" cy="38" r="30" fill="none" stroke="var(--bg3)" stroke-width="7"/><circle cx="38" cy="38" r="30" fill="none" stroke-width="7" stroke-linecap="round" id="sc-arc" stroke="var(--green)" stroke-dasharray="188.5" stroke-dashoffset="188.5"/></svg>
-          <div class="ring-score" id="sc-num" style="color:var(--green-text)">0</div>
-        </div>
-        <div>
-          <div style="font-size:16px;font-weight:600;color:var(--text)" id="sc-verdict">—</div>
-          <div style="font-size:12px;color:var(--text3);margin-top:3px" id="sc-sub"></div>
-        </div>
-      </div>
-      <div class="ai-out" id="sc-ai"></div>
-      <div style="margin-top:.75rem;text-align:right"><button class="copy-btn" onclick="copyEl('sc-ai')">Copy analysis</button></div>
-    </div>
-  </div>
-</div>
-
-<!-- CONCALL -->
-<div id="section-concall" class="section">
-  <div class="page-header">
-    <div class="page-title">Concall analyser</div>
-    <div class="page-sub">Upload transcript PDF — key guidance, red flags, contradiction check</div>
-  </div>
-  <div class="card">
-    <div class="row2">
-      <div class="form-group"><label>Company</label><input type="text" id="cc-co" placeholder="e.g. Tara Chand Infralogistic"></div>
-      <div class="form-group"><label>Quarter</label><input type="text" id="cc-q" placeholder="e.g. Q3 FY25"></div>
-    </div>
-    <div class="form-group">
-      <label>Transcript PDF</label>
-      <div id="cc-zone" onclick="document.getElementById('cc-file').click()" style="border:1.5px dashed var(--border2);border-radius:var(--radius);padding:1.5rem;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg2)">
-        <input type="file" id="cc-file" accept=".pdf" onchange="handleCCFile(this)" style="display:none">
-        <div style="font-size:22px;margin-bottom:.5rem">📄</div>
-        <div id="cc-lbl" style="font-size:13px;color:var(--text2);font-weight:500">Click to upload PDF</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px">Concall transcript</div>
-      </div>
-    </div>
-    <div class="form-group"><label>Previous quarter guidance (for contradiction check)</label><textarea id="cc-prev" placeholder="Paste key guidance from last quarter's concall..."></textarea></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-primary" id="cc-btn" onclick="runConcall()">Analyse transcript</button>
-      <button class="btn btn-sm btn-ghost" onclick="clearConcall()">Clear</button>
-    </div>
-  </div>
-  <div id="cc-out" style="display:none">
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title" style="margin-bottom:0">Analysis</div>
-        <button class="copy-btn" onclick="copyEl('cc-ai')">Copy</button>
-      </div>
-      <div class="ai-out" id="cc-ai"></div>
-    </div>
-  </div>
-</div>
-
-<!-- REPORT -->
-<div id="section-report" class="section">
-  <div class="page-header">
-    <div class="page-title">Research report builder</div>
-    <div class="page-sub">Raw notes in — publish-ready report and social snippets out</div>
-  </div>
-  <div class="card">
-    <div class="row2">
-      <div class="form-group"><label>Company / stock</label><input type="text" id="rp-co" placeholder="e.g. CCL Products India"></div>
-      <div class="form-group"><label>Report type</label><select id="rp-type"><option value="initiation">Initiation of coverage</option><option value="update">Quarterly update</option><option value="thesis">Investment thesis</option><option value="exit">Exit note</option></select></div>
-    </div>
-
-    <!-- SOURCE DOCUMENTS -->
-    <div class="form-group">
-      <label>Source documents (optional but recommended)</label>
-      <div id="rp-drop-zone" style="border:1.5px dashed var(--border2);border-radius:var(--radius);padding:1.25rem;background:var(--bg2);transition:all .15s;cursor:pointer" onclick="document.getElementById('rp-files').click()" ondragover="event.preventDefault();this.style.borderColor='var(--green)'" ondragleave="this.style.borderColor=''" ondrop="handleRpDrop(event)">
-        <input type="file" id="rp-files" multiple accept=".pdf,.xlsx,.xls,.csv,.txt" style="display:none" onchange="handleRpFiles(this.files)">
-        <div style="text-align:center">
-          <div style="font-size:22px;margin-bottom:.375rem">📎</div>
-          <div style="font-size:13px;font-weight:500;color:var(--text2)">Drop files here or click to upload</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:3px">Concall transcripts · Earnings presentations · Annual reports · Any PDF or Excel</div>
-        </div>
-      </div>
-      <div id="rp-file-list" style="margin-top:.625rem;display:flex;flex-wrap:wrap;gap:6px"></div>
-    </div>
-
-    <div class="form-group"><label>Your notes / thesis (optional if files uploaded)</label><textarea id="rp-notes" style="min-height:120px" placeholder="Add your own observations, thesis points, valuation thoughts... AI will combine these with the uploaded documents"></textarea></div>
-    <div class="row3">
-      <div class="form-group"><label>CMP (₹)</label><input type="number" id="rp-cmp" placeholder="850"></div>
-      <div class="form-group"><label>Target price (₹)</label><input type="number" id="rp-tgt" placeholder="1100"></div>
-      <div class="form-group"><label>View</label><select id="rp-view"><option>BUY</option><option>ACCUMULATE</option><option>HOLD</option><option>REDUCE</option><option>SELL</option></select></div>
-    </div>
-    <div class="form-group"><label>Key risks</label><textarea id="rp-risks" style="min-height:70px" placeholder="Main risks to the thesis..."></textarea></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-primary" id="rp-btn" onclick="runReport()">Build report</button>
-      <button class="btn btn-sm btn-ghost" onclick="clearReport()">Clear</button>
-    </div>
-  </div>
-  <div id="rp-out" style="display:none">
-    <div class="card">
-      <div class="card-header"><div class="card-title" style="margin-bottom:0">Full report</div><button class="copy-btn" onclick="copyEl('rp-full')">Copy</button></div>
-      <div class="ai-out" id="rp-full"></div>
-    </div>
-    <div class="card">
-      <div class="card-header"><div class="card-title" style="margin-bottom:0">Social media snippets</div><button class="copy-btn" onclick="copyEl('rp-social')">Copy</button></div>
-      <div class="ai-out" id="rp-social"></div>
-    </div>
-  </div>
-</div>
-
-</div><!-- /main -->
-</div><!-- /shell -->
-
-<!-- MODALS -->
-<div class="modal-bg" id="family-modal" onclick="if(event.target===this)closeModal('family-modal')">
-  <div class="modal">
-    <div class="modal-title">Add family / portfolio group</div>
-    <div class="form-group"><label>Family name</label><input type="text" id="fm-name" placeholder="e.g. Family 1, HUF, Trust"></div>
-    <div class="form-group"><label>Description (optional)</label><input type="text" id="fm-desc" placeholder="e.g. Parents + self accounts"></div>
-    <div class="modal-btns">
-      <button class="btn btn-sm btn-ghost" onclick="closeModal('family-modal')">Cancel</button>
-      <button class="btn btn-sm btn-primary" onclick="saveFamily()">Add family</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-bg" id="acct-modal" onclick="if(event.target===this)closeModal('acct-modal')">
-  <div class="modal">
-    <div class="modal-title" id="acct-modal-title">Add account</div>
-    <div class="form-group"><label>Account holder name</label><input type="text" id="am-name" placeholder="e.g. Bhavesh Shah"></div>
-    <div class="form-group"><label>Broker</label>
-      <select id="am-broker">
-        <option value="zerodha">Zerodha</option>
-        <option value="hdfcsec">HDFC Securities</option>
-        <option value="icicisec">ICICI Securities</option>
-        <option value="other">Other</option>
-      </select>
-    </div>
-    <div class="form-group"><label>Client ID (optional)</label><input type="text" id="am-id" placeholder="e.g. WR3134"></div>
-    <div class="modal-btns">
-      <button class="btn btn-sm btn-ghost" onclick="closeModal('acct-modal')">Cancel</button>
-      <button class="btn btn-sm btn-primary" onclick="saveAccount()">Add account</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-bg" id="txn-modal" onclick="if(event.target===this)closeModal('txn-modal')">
-  <div class="modal" style="max-width:640px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
-      <div class="modal-title" style="margin-bottom:0" id="txn-title">Transactions</div>
-      <button class="btn btn-sm btn-ghost" onclick="closeModal('txn-modal')">✕</button>
-    </div>
-    <div id="txn-body"></div>
-  </div>
-</div>
-
-<script>
-// ─── State ────────────────────────────────────────────────────────────────────
-let families=JSON.parse(localStorage.getItem('inv3_fam')||'[]');
-let builtHoldings=[];
-let livePrices={};
-let currentFilter='all';
-let currentFamilyIdx=-1;
-let ccFileData=null;
-const BROKERS={zerodha:'Zerodha',hdfcsec:'HDFC Sec',icicisec:'ICICI Sec',other:'Other'};
-function saveState(){localStorage.setItem('inv3_fam',JSON.stringify(families));}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-
-// ─── Navigation ───────────────────────────────────────────────────────────────
-function showSection(name,el){
-  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
-  document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
-  if(el)el.classList.add('active');
-  document.getElementById('section-'+name).classList.add('active');
-  if(name==='setup')renderFamilies();
-}
-
-function showPortfolio(filter,el){
-  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
-  document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
-  if(el)el.classList.add('active');
-  currentFilter=filter;
-  document.getElementById('section-portfolio').classList.add('active');
-  const f=families.find(f=>f.name===filter);
-  document.getElementById('port-title').textContent=filter==='all'?'All families — consolidated':filter;
-  document.getElementById('port-sub').textContent=filter==='all'?families.length+' famil'+(families.length!==1?'ies':'y'):f?(f.accounts.length+' account'+(f.accounts.length!==1?'s':'')):'';
-  if(builtHoldings.length)renderTable();
-  else document.getElementById('h-body').innerHTML='<tr><td colspan="10" style="text-align:center;padding:2.5rem;color:var(--text3)">Go to Setup → Build portfolio first</td></tr>';
-}
-
-function updateFamilyNav(){
-  document.getElementById('family-nav').innerHTML=families.map(f=>`
-    <div class="nav-item sub" onclick="showPortfolio('${f.name}',this)">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-      ${f.name}
-    </div>`).join('');
-}
-
-// ─── Claude API ───────────────────────────────────────────────────────────────
-async function callClaude(messages,system,onChunk){
-  const key=localStorage.getItem('inv_api_key')||'';
-  if(!key){throw new Error('No API key set — add your Anthropic API key in the sidebar');}
-  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,stream:true,system,messages})});
-  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API error');}
-  const reader=res.body.getReader();const dec=new TextDecoder();let full='';
-  while(true){const{done,value}=await reader.read();if(done)break;for(const line of dec.decode(value).split('\n').filter(l=>l.startsWith('data: '))){const d=line.slice(6);if(d==='[DONE]')continue;try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;onChunk(full);}}catch(e){}}}
-  return full;
-}
-function md(t){return t.replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^- (.+)$/gm,'<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/g,'<ul>$&</ul>');}
-function copyEl(id){navigator.clipboard.writeText(document.getElementById(id).innerText);const b=document.getElementById(id).closest('.card')?.querySelector('.copy-btn');if(b){b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',2000);}}
-
-// ─── XIRR ─────────────────────────────────────────────────────────────────────
-function calcXIRR(txns,currentValue){
-  if(!txns||txns.length<1)return null;
-  const cfs=[],dts=[];
-  txns.forEach(t=>{cfs.push(t.type==='BUY'?-t.value:t.value);dts.push(new Date(t.date));});
-  cfs.push(currentValue);dts.push(new Date());
-  const t0=dts[0].getTime();
-  function npv(r){return cfs.reduce((s,cf,i)=>s+cf/Math.pow(1+r,(dts[i].getTime()-t0)/(365*24*3600*1000)),0);}
-  let lo=-0.999,hi=10;
-  for(let i=0;i<150;i++){const mid=(lo+hi)/2;const v=npv(mid);if(Math.abs(v)<0.5)return mid;if(v>0)lo=mid;else hi=mid;}
-  return(lo+hi)/2;
-}
-
-// ─── PRICES ───────────────────────────────────────────────────────────────────
-function normSym(sym){
-  return String(sym).replace(/EQNR$/i,'').replace(/EQN$/i,'').replace(/EQ$/i,'').replace(/-EQ$/i,'').replace(/-BE$/i,'').replace(/-SM$/i,'').replace(/-SME$/i,'').replace(/-N$/i,'').replace(/\s+/g,'').toUpperCase().trim();
-}
-async function yFetch(ticker){
-  for(const base of ['https://query1.finance.yahoo.com','https://query2.finance.yahoo.com']){
-    try{
-      const r=await fetch(`${base}/v8/finance/chart/${ticker}?interval=1d&range=1d`,{signal:AbortSignal.timeout(6000)});
-      if(!r.ok)continue;
-      const j=await r.json();const m=j.chart?.result?.[0]?.meta;
-      if(!m||!m.regularMarketPrice)continue;
-      const prev=m.chartPreviousClose||m.previousClose||m.regularMarketPrice;
-      return{price:m.regularMarketPrice,change:m.regularMarketPrice-prev,changeP:prev?(m.regularMarketPrice-prev)/prev*100:0,source:ticker.endsWith('.NS')?'NSE':'BSE',time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
-    }catch(e){continue;}
-  }
-  return null;
-}
-async function fetchPrice(symbol){
-  const sym=normSym(symbol);
-  for(const t of[sym+'.NS',sym+'.BO',sym+'-SM.NS',sym+'-SM.BO']){
-    const p=await yFetch(t);if(p)return p;
-  }
-  return null;
-}
-async function refreshPrices(){
-  const syms=[...new Set(builtHoldings.map(h=>h.stock))];
-  if(!syms.length)return;
-  const btn=document.getElementById('refresh-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Fetching…';
-  document.getElementById('price-status').textContent='Fetching prices…';
-  let done=0;
-  await Promise.all(syms.map(async sym=>{
-    const p=await fetchPrice(sym);
-    if(p)livePrices[normSym(sym)]=p;
-    document.getElementById('price-status').textContent=`${++done}/${syms.length} fetched`;
-  }));
-  const got=Object.keys(livePrices).length;
-  document.getElementById('price-status').textContent=`${got}/${syms.length} prices · ${new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
-  btn.disabled=false;btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg> Refresh prices';
-  renderTable();renderStatsRow();
-}
-
-// ─── PARSE ────────────────────────────────────────────────────────────────────
-function parseZerodha(data){
-  const txns=[];let hi=-1;
-  for(let i=0;i<data.length;i++){
-    // Find header row - Symbol is in column index 1
-    const row=data[i];
-    if(row&&(row[1]==='Symbol'||String(row[1]||'').trim()==='Symbol')){hi=i;break;}
-  }
-  if(hi<0){
-    // Fallback: scan for any row with 'symbol' in it
-    for(let i=0;i<data.length;i++){
-      const flat=data[i].join(',').toLowerCase();
-      if(flat.includes('symbol')&&flat.includes('trade type')){hi=i;break;}
-    }
-  }
-  if(hi<0) return txns;
-  for(let i=hi+1;i<data.length;i++){
-    const r=data[i];
-    if(!r||r.every(v=>v===null||v===undefined||v==='')) continue;
-    const sym=r[1]; const date=r[3]; const type=r[7];
-    const qty=parseFloat(String(r[9]||'').replace(/,/g,''))||0;
-    const price=parseFloat(String(r[10]||'').replace(/,/g,''))||0;
-    if(!sym||!date||!type||!qty||!price) continue;
-    // Handle date - could be string 'YYYY-MM-DD' or Date object
-    let d;
-    if(date instanceof Date) d=date;
-    else{ d=new Date(String(date)); if(isNaN(d.getTime())) d=new Date(String(date).replace(/-/g,'/')); }
-    if(isNaN(d.getTime())) continue;
-    txns.push({stock:normSym(String(sym)),date:d,type:String(type).toLowerCase().includes('buy')?'BUY':'SELL',qty,price,value:qty*price});
-  }
-  return txns;
-}
-function parseHDFC(data){
-  const txns=[];let hi=-1;
-  for(let i=0;i<data.length;i++){if(String(data[i][0]||'').toLowerCase().includes('date')){hi=i;break;}}
-  const start=hi>=0?hi+1:1;
-  for(let i=start;i<data.length;i++){
-    const r=data[i];const sym=r[1];const dateStr=r[0];const action=r[2];const qty=parseFloat(r[3])||0;const price=parseFloat(r[4])||0;
-    if(!sym||!dateStr||!action||!qty||!price)continue;
-    const d=new Date(dateStr);if(isNaN(d.getTime()))continue;
-    txns.push({stock:normSym(String(sym)),date:d,type:String(action).toUpperCase().includes('BUY')?'BUY':'SELL',qty,price,value:qty*price});
-  }
-  return txns;
-}
-function parseICICI(data){
-  const txns=[];let hi=-1;
-  for(let i=0;i<data.length;i++){if(data[i][0]==='Name'){hi=i;break;}}
-  if(hi<0)return txns;
-  for(let i=hi+1;i<data.length;i++){
-    const r=data[i];let sym=r[0];const dateStr=r[1];const action=r[2];const qty=parseFloat(r[5])||parseFloat(r[4])||0;const price=parseFloat(String(r[7]).trim())||0;
-    if(!sym||!dateStr||!action||!qty||!price)continue;
-    const d=new Date(dateStr.replace(/-/g,' '));if(isNaN(d.getTime()))continue;
-    txns.push({stock:normSym(String(sym)),date:d,type:String(action).toUpperCase().includes('BUY')?'BUY':'SELL',qty,price,value:qty*price});
-  }
-  return txns;
-}
-function parseGeneric(data){
-  const txns=[];let hi=-1;
-  for(let i=0;i<Math.min(20,data.length);i++){const r=data[i].map(c=>String(c||'')).join(',').toLowerCase();if(r.includes('symbol')||r.includes('stock')){hi=i;break;}}
-  if(hi<0)return txns;
-  const hdr=data[hi].map(c=>String(c||'').toLowerCase());
-  const si=hdr.findIndex(h=>h.includes('symbol')||h.includes('stock')||h.includes('name'));
-  const di=hdr.findIndex(h=>h.includes('date'));
-  const ti=hdr.findIndex(h=>h.includes('type')||h.includes('action'));
-  const qi=hdr.findIndex(h=>h.includes('qty')||h.includes('quant'));
-  const pi=hdr.findIndex(h=>h.includes('price'));
-  if(si<0||di<0||qi<0||pi<0)return txns;
-  for(let i=hi+1;i<data.length;i++){
-    const r=data[i];const sym=normSym(String(r[si]||''));const qty=parseFloat(r[qi])||0;const price=parseFloat(r[pi])||0;
-    if(!sym||!qty||!price)continue;
-    const d=new Date(r[di]);if(isNaN(d.getTime()))continue;
-    txns.push({stock:sym,date:d,type:String(r[ti]||'buy').toLowerCase().includes('sell')?'SELL':'BUY',qty,price,value:qty*price});
-  }
-  return txns;
-}
-function readFile(file,broker){
-  return new Promise(resolve=>{
-    const reader=new FileReader();
-    reader.onload=e=>{
-      try{
-        const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
-        const ws=wb.Sheets[wb.SheetNames[0]];
-        const data=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
-        let txns=[];
-        if(broker==='zerodha')txns=parseZerodha(data);
-        else if(broker==='hdfcsec')txns=parseHDFC(data);
-        else if(broker==='icicisec')txns=parseICICI(data);
-        else txns=parseGeneric(data);
-        resolve(txns);
-      }catch(err){console.error(err);resolve([]);}
-    };
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-// ─── BUILD ────────────────────────────────────────────────────────────────────
-async function buildAll(){
-  const all=families.flatMap((f,fi)=>f.accounts.map((a,ai)=>({...a,family:f.name,fi,ai})));
-  const withFiles=all.filter(a=>a.file||(a.files&&a.files.length));
-  if(!withFiles.length){alert('Upload at least one broker statement first');return;}
-  const btn=document.getElementById('build-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Building…';
-  const allTxns=[];
-
-  for(const acct of withFiles){
-    const filesToProcess = acct.files && acct.files.length ? acct.files : [acct.file];
-    for(const file of filesToProcess){
-      if(!file) continue;
-      let broker = acct.broker;
-      if(broker==='other'){
-        const fn=file.name.toLowerCase();
-        if(fn.includes('tradebook')||fn.includes('zerodha')) broker='zerodha';
-        else if(fn.includes('hdfc')) broker='hdfcsec';
-        else if(fn.includes('icici')||fn.includes('orderlog')) broker='icicisec';
-      }
-      const txns=await readFile(file, broker);
-      const buys=txns.filter(t=>t.type==='BUY').length;
-      const sells=txns.filter(t=>t.type==='SELL').length;
-
-      txns.forEach(t=>allTxns.push({...t,family:acct.family,account:acct.name,broker}));
-    }
-  }
-
-  const stockMap={};
-  allTxns.forEach(t=>{
-    if(!stockMap[t.stock])stockMap[t.stock]={stock:t.stock,txns:[],accounts:new Set()};
-    stockMap[t.stock].txns.push(t);
-    stockMap[t.stock].accounts.add(`${t.account} (${BROKERS[t.broker]||t.broker})`);
-  });
-  builtHoldings=[];
-  Object.values(stockMap).forEach(s=>{
-    const sorted=s.txns.sort((a,b)=>new Date(a.date)-new Date(b.date));
-    let qty=0,totalCost=0;
-    sorted.forEach(t=>{
-      if(t.type==='BUY'){qty+=t.qty;totalCost+=t.value;}
-      else{const avg=qty>0?totalCost/qty:0;qty-=t.qty;totalCost=Math.max(0,qty*avg);}
-      if(qty<0.001){qty=0;totalCost=0;}
-    });
-    if(qty<0.001)return;
-    builtHoldings.push({stock:s.stock,qty,avgCost:qty>0?totalCost/qty:0,invested:totalCost,families:[...new Set(s.txns.map(t=>t.family))],accounts:[...s.accounts],txns:sorted});
-  });
-  await refreshPrices();
-  showPortfolio('all',document.getElementById('nav-all'));
-
-  btn.disabled=false;btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Build portfolio';
-}
-
-// ─── RENDER TABLE ─────────────────────────────────────────────────────────────
-const fmt=n=>n>=10000000?(n/10000000).toFixed(1)+'Cr':n>=100000?(n/100000).toFixed(1)+'L':n>=1000?(n/1000).toFixed(1)+'K':n.toFixed(0);
-const fmtP=n=>(n>=0?'+':'')+n.toFixed(1)+'%';
-
-function renderTable(){
-  const q=(document.getElementById('h-search')?.value||'').toLowerCase();
-  const sortBy=document.getElementById('h-sort')?.value||'value';
-  let data=builtHoldings.filter(h=>(currentFilter==='all'||h.families.includes(currentFilter))&&(!q||h.stock.toLowerCase().includes(q)));
-  const totalInv=data.reduce((s,h)=>s+h.invested,0);
-  let totVal=0,totPnl=0;
-  data=data.map(h=>{
-    const ltp=livePrices[normSym(h.stock)];
-    const val=ltp?h.qty*ltp.price:h.invested;
-    const pnl=ltp?val-h.invested:0;
-    const pnlPct=h.invested>0?pnl/h.invested*100:0;
-    const weight=totalInv>0?h.invested/totalInv*100:0;
-    const xirr=calcXIRR(h.txns,val);
-    totVal+=val;totPnl+=pnl;
-    return{...h,ltp,val,pnl,pnlPct,weight,xirr};
-  });
-  data.sort((a,b)=>{
-    if(sortBy==='stock')return a.stock.localeCompare(b.stock);
-    if(sortBy==='pnl')return b.pnl-a.pnl;
-    if(sortBy==='pnlpct')return b.pnlPct-a.pnlPct;
-    if(sortBy==='weight')return b.weight-a.weight;
-    if(sortBy==='xirr')return(b.xirr||0)-(a.xirr||0);
-    return b.val-a.val;
-  });
-  document.getElementById('h-body').innerHTML=data.map(h=>`
-    <tr class="clickable" onclick="showTxns('${h.stock}')">
-      <td><span style="font-weight:600">${h.stock}</span></td>
-      <td class="mono">${h.qty.toFixed(0)}</td>
-      <td class="mono">₹${h.avgCost.toFixed(1)}</td>
-      <td>${h.ltp?`<div class="mono" style="font-weight:500">₹${h.ltp.price.toFixed(1)}</div><div class="price-pill ${h.ltp.changeP>=0?'up':'dn'}">${fmtP(h.ltp.changeP)}</div>`:'<span class="price-pill na">—</span>'}</td>
-      <td class="mono" style="font-weight:500">₹${fmt(h.val)}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span class="mono">${h.weight.toFixed(1)}%</span>
-          <div class="wbar-bg"><div class="wbar" style="width:${Math.min(h.weight*4,100)}%"></div></div>
-        </div>
-      </td>
-      <td class="mono ${h.pnl>=0?'pos':'neg'}">${h.ltp?(h.pnl>=0?'+':'')+'₹'+fmt(Math.abs(h.pnl)):'—'}</td>
-      <td class="mono ${h.pnlPct>=0?'pos':'neg'}">${h.ltp?fmtP(h.pnlPct):'—'}</td>
-      <td class="mono ${(h.xirr||0)>=0?'pos':'neg'}">${h.xirr!=null?(h.xirr*100).toFixed(1)+'%':'—'}</td>
-      <td style="font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.accounts.join(', ')}</td>
-    </tr>`).join('');
-  renderStatsRow(data,totalInv,totVal,totPnl);
-}
-
-function renderStatsRow(data,totalInv,totVal,totPnl){
-  if(!data){
-    const filter=currentFilter;
-    const d=builtHoldings.filter(h=>filter==='all'||h.families.includes(filter));
-    const ti=d.reduce((s,h)=>s+h.invested,0);
-    let tv=0,tp=0;
-    d.forEach(h=>{const ltp=livePrices[normSym(h.stock)];const val=ltp?h.qty*ltp.price:h.invested;tv+=val;tp+=ltp?val-h.invested:0;});
-    renderStatsRow(d,ti,tv,tp);return;
-  }
-  const pnlPct=totalInv>0?totPnl/totalInv*100:0;
-  document.getElementById('port-stats').innerHTML=`
-    <div class="stat-box"><div class="stat-n">₹${fmt(totalInv)}</div><div class="stat-l">Invested</div></div>
-    <div class="stat-box"><div class="stat-n">₹${fmt(totVal)}</div><div class="stat-l">Current value</div></div>
-    <div class="stat-box"><div class="stat-n ${totPnl>=0?'pos':'neg'}">${totPnl>=0?'+':''}₹${fmt(Math.abs(totPnl))}</div><div class="stat-l">Total P&L</div></div>
-    <div class="stat-box"><div class="stat-n ${pnlPct>=0?'pos':'neg'}">${pnlPct>=0?'+':''} ${pnlPct.toFixed(1)}%</div><div class="stat-l">Return</div></div>
-    <div class="stat-box"><div class="stat-n">${data.length}</div><div class="stat-l">Holdings</div></div>`;
-}
-
-// ─── TXN MODAL ────────────────────────────────────────────────────────────────
-function showTxns(stock){
-  const h=builtHoldings.find(h=>h.stock===stock);if(!h)return;
-  const ltp=livePrices[normSym(stock)];
-  const val=ltp?h.qty*ltp.price:h.invested;
-  const pnl=ltp?val-h.invested:0;
-  const xirr=calcXIRR(h.txns,val);
-  document.getElementById('txn-title').textContent=stock+(ltp?' · ₹'+ltp.price.toFixed(1)+' ('+fmtP(ltp.changeP)+')':'  '  );
-  document.getElementById('txn-body').innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem">
-      <div class="stat-box"><div class="stat-n mono">${h.qty.toFixed(0)}</div><div class="stat-l">Holding qty</div></div>
-      <div class="stat-box"><div class="stat-n mono">₹${h.avgCost.toFixed(1)}</div><div class="stat-l">Avg cost</div></div>
-      <div class="stat-box"><div class="stat-n mono ${pnl>=0?'pos':'neg'}">${ltp?(pnl>=0?'+':'')+'₹'+fmt(Math.abs(pnl)):'—'}</div><div class="stat-l">P&L</div></div>
-      <div class="stat-box"><div class="stat-n mono ${(xirr||0)>=0?'pos':'neg'}">${xirr!=null?(xirr*100).toFixed(1)+'%':'—'}</div><div class="stat-l">XIRR</div></div>
-    </div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:.875rem;display:flex;gap:8px;flex-wrap:wrap">
-      <span>Families: ${h.families.join(', ')}</span>
-      <span>·</span>
-      <span>Accounts: ${h.accounts.join(', ')}</span>
-    </div>
-    <div class="tbl-wrap"><table>
-      <thead><tr><th>Date</th><th>Type</th><th>Qty</th><th>Price</th><th>Value</th><th>Account</th></tr></thead>
-      <tbody>${h.txns.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t=>`<tr>
-        <td class="mono">${new Date(t.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})}</td>
-        <td><span class="badge ${t.type==='BUY'?'badge-green':'badge-red'}">${t.type}</span></td>
-        <td class="mono">${t.qty.toFixed(0)}</td>
-        <td class="mono">₹${parseFloat(t.price).toFixed(2)}</td>
-        <td class="mono">₹${fmt(t.value)}</td>
-        <td style="font-size:11px;color:var(--text3)">${t.account||'—'} (${BROKERS[t.broker]||t.broker||'—'})</td>
-      </tr>`).join('')}</tbody>
-    </table></div>`;
-  document.getElementById('txn-modal').classList.add('open');
-}
-
-// ─── FAMILY/ACCOUNT MGMT ──────────────────────────────────────────────────────
-function openFamilyModal(){document.getElementById('fm-name').value='';document.getElementById('fm-desc').value='';document.getElementById('family-modal').classList.add('open');}
-function saveFamily(){
-  const n=document.getElementById('fm-name').value.trim();if(!n){alert('Enter a name');return;}
-  families.push({name:n,desc:document.getElementById('fm-desc').value.trim(),accounts:[],collapsed:false});
-  saveState();closeModal('family-modal');renderFamilies();updateFamilyNav();updateBulkFamilyDropdown();
-}
-function openAcctModal(fi){
-  currentFamilyIdx=fi;
-  document.getElementById('acct-modal-title').textContent='Add account — '+families[fi].name;
-  document.getElementById('am-name').value='';document.getElementById('am-id').value='';
-  document.getElementById('acct-modal').classList.add('open');
-}
-function saveAccount(){
-  const n=document.getElementById('am-name').value.trim();if(!n){alert('Enter a name');return;}
-  families[currentFamilyIdx].accounts.push({name:n,broker:document.getElementById('am-broker').value,clientId:document.getElementById('am-id').value.trim(),file:null,fileName:null});
-  saveState();closeModal('acct-modal');renderFamilies();
-}
-function deleteFamily(i){if(!confirm('Delete '+families[i].name+'?'))return;families.splice(i,1);saveState();renderFamilies();updateFamilyNav();}
-function deleteAccount(fi,ai){families[fi].accounts.splice(ai,1);saveState();renderFamilies();}
-function toggleFamily(i){families[i].collapsed=!families[i].collapsed;renderFamilies();}
-function handlePortFiles(fi,ai,input){
-  const newFiles=[...input.files];if(!newFiles.length)return;
-  if(!families[fi].accounts[ai].files) families[fi].accounts[ai].files=[];
-  newFiles.forEach(f=>{
-    if(!families[fi].accounts[ai].files.find(x=>x.name===f.name)){
-      families[fi].accounts[ai].files.push(f);
-    }
-  });
-  // Keep legacy single-file fields for backward compat
-  families[fi].accounts[ai].file=families[fi].accounts[ai].files[0];
-  families[fi].accounts[ai].fileName=families[fi].accounts[ai].files[0]?.name||null;
-  input.value='';
-  renderFamilies();
-}
-function removePortFile(fi,ai,fIdx){
-  families[fi].accounts[ai].files.splice(fIdx,1);
-  families[fi].accounts[ai].file=families[fi].accounts[ai].files[0]||null;
-  families[fi].accounts[ai].fileName=families[fi].accounts[ai].files[0]?.name||null;
-  renderFamilies();
-}
-
-function clearAll(){
-  if(!confirm('This will delete all families, accounts and data. Are you sure?'))return;
-  families=[];builtHoldings=[];livePrices={};
-  localStorage.removeItem('inv3_fam');
-  renderFamilies();updateFamilyNav();
-  showSection('setup',document.getElementById('nav-setup'));
-}
-
-function renderFamilies(){
-  const el=document.getElementById('families-list');
-  const total=families.reduce((s,f)=>s+f.accounts.length,0);
-  document.getElementById('port-summary').textContent=families.length+' famil'+(families.length!==1?'ies':'y')+' · '+total+' account'+(total!==1?'s':'');
-  if(!families.length){
-    el.innerHTML='<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--bg4)" stroke-width="1.5" style="margin:0 auto 1rem;display:block"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><strong>No families yet</strong>Add a family group to start building your portfolio</div>';
-    return;
-  }
-  el.innerHTML=families.map((f,fi)=>`
-    <div class="family-card">
-      <div class="family-header" onclick="toggleFamily(${fi})">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:32px;height:32px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text2)">${f.name.charAt(0)}</div>
-          <div>
-            <div class="family-name">${f.name} <span class="badge badge-blue" style="font-size:10px;margin-left:4px">${f.accounts.length} acct${f.accounts.length!==1?'s':''}</span></div>
-            ${f.desc?`<div class="family-desc">${f.desc}</div>`:''}
-          </div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <button class="btn btn-sm" onclick="event.stopPropagation();openAcctModal(${fi})">+ Account</button>
-          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteFamily(${fi})">Delete</button>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" style="transition:transform .15s;transform:rotate(${f.collapsed?'0':'180'}deg)"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-      </div>
-      ${!f.collapsed?`<div class="family-body">
-        ${!f.accounts.length?'<div style="font-size:12px;color:var(--text3);text-align:center;padding:.5rem">No accounts yet — click + Account to add</div>':''}
-        ${f.accounts.map((a,ai)=>`
-          <div class="acct-card" style="flex-direction:column;align-items:stretch;gap:8px">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <div>
-                <div class="acct-name">${a.name}</div>
-              <div class="acct-broker-tag">${BROKERS[a.broker]||a.broker}${a.clientId?' · '+a.clientId:''}</div>
+        <!-- ═══ SIDEBAR ═══════════════════════════════════════════════════════════ -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-mark">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 3h2v-2h2v2h2v2h-2v2h-2v-2h-2v-2z"/>
+                    </svg>
+                </div>
+                <div class="sidebar-logo-name">Investor Suite</div>
+                <div class="sidebar-logo-sub">by Bhavs</div>
             </div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-weight:500;color:var(--text2);background:var(--bg);transition:all .12s;white-space:nowrap">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  Upload files
-                  <input type="file" id="pf-${fi}-${ai}" accept=".csv,.xlsx,.xls" multiple style="display:none" onchange="handlePortFiles(${fi},${ai},this)">
-                </label>
-                <button class="btn btn-sm btn-danger" onclick="deleteAccount(${fi},${ai})">X</button>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Portfolio</div>
+                <div class="nav-item active" id="nav-setup" onclick="showSection('setup',this)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/>
+                        <path d="M8 21h8M12 17v4"/>
+                    </svg>
+
+                          Setup
+                        
+                </div>
+                <div class="nav-item" id="nav-all" onclick="showPortfolio('all',this)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+
+                          All families
+                        
+                </div>
+                <div id="family-nav"></div>
+            </div>
+
+            <div class="nav-divider"></div>
+
+            <div class="nav-group">
+                <div class="nav-group-label">Research</div>
+                <div class="nav-item" onclick="showSection('scorecard',this)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/>
+                    </svg>
+
+                          Mgmt Scorecard
+                        
+                </div>
+                <div class="nav-item" onclick="showSection('concall',this)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    </svg>
+
+                          Concall Analyser
+                        
+                </div>
+                <div class="nav-item" onclick="showSection('report',this)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                    </svg>
+
+                          Report Builder
+                        
+                </div>
+            </div>
+            <div style="padding:1rem 1.25rem;border-top:1px solid var(--border);margin-top:auto">
+                <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">API Key</div>
+                <div style="position:relative">
+                    <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." style="width:100%;padding:7px 32px 7px 9px;font-size:11px;font-family:monospace;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg2);color:var(--text);outline:none" oninput="saveApiKey(this.value)">
+                    <button onclick="toggleApiKeyVisibility()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:0;font-size:12px" id="api-eye">👁</button>
+                </div>
+                <div id="api-status" style="font-size:10px;margin-top:4px;color:var(--text3)">Not set</div>
+            </div>
+        </div>
+
+        <!-- ═══ MAIN ══════════════════════════════════════════════════════════════ -->
+        <div class="main">
+
+            <!-- SETUP -->
+            <div id="section-setup" class="section active">
+                <div class="page-header">
+                    <div class="page-title">Portfolio setup</div>
+                    <div class="page-sub">Add families, accounts, and upload broker statements</div>
+                </div>
+                <div class="section-hdr">
+                    <div id="port-summary" style="font-size:13px;color:var(--text3)"></div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-sm" onclick="openFamilyModal()">+ Add family</button>
+                        <button class="btn btn-sm btn-danger" onclick="clearAll()">Clear all</button>
+                        <button class="btn btn-primary btn-sm" id="build-btn" onclick="buildAll()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+
+                                    Build portfolio
+                                  
+                        </button>
+                    </div>
+                </div>
+                <div id="families-list"></div>
+
+                <!-- BULK UPLOAD -->
+                <div class="card" style="border:1.5px dashed var(--border2);background:var(--bg2);box-shadow:none;margin-top:.5rem">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Bulk upload statements</div>
+                            <div style="font-size:12px;color:var(--text3)">Drop multiple broker files at once — broker is auto-detected from file contents</div>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                            <select id="bulk-family" style="width:160px;padding:6px 10px;font-size:12px">
+                                <option value="">— assign to family —</option>
+                            </select>
+                            <label style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);background:var(--bg);transition:all .12s;text-transform:none;letter-spacing:0" onmouseenter="this.style.background='var(--bg2)'" onmouseleave="this.style.background='var(--bg)'">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+
+                                          Upload files
+                                          
+                                <input type="file" id="bulk-files" multiple accept=".xlsx,.xls,.csv" style="display:none" onchange="handleBulkUpload(this)">
+                            </label>
+                        </div>
+                    </div>
+                    <div id="bulk-log" style="margin-top:.875rem;display:none"></div>
+                </div>
+            </div>
+
+            <!-- PORTFOLIO VIEW -->
+            <div id="section-portfolio" class="section">
+                <div class="section-hdr">
+                    <div class="page-header" style="margin-bottom:0">
+                        <div class="page-title" id="port-title">All families</div>
+                        <div class="page-sub" id="port-sub"></div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                        <span id="price-status" style="font-size:11px;color:var(--text3)"></span>
+                        <button class="btn btn-sm" onclick="refreshPrices()" id="refresh-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polyline points="1 4 1 10 7 10"/>
+                                <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+                            </svg>
+
+                                    Refresh prices
+                                  
+                        </button>
+                        <button class="btn btn-sm btn-ghost" onclick="showSection('setup',document.getElementById('nav-setup'))">← Setup</button>
+                    </div>
+                </div>
+                <div class="stats-row" id="port-stats"></div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title" style="margin-bottom:0">
+                            Holdings 
+                            <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3);font-size:11px">— click any row for transactions</span>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                            <input class="search-input" style="width:150px" type="text" id="h-search" placeholder="Search stock..." oninput="renderTable()">
+                            <select class="search-input" style="width:140px" id="h-sort" onchange="renderTable()">
+                                <option value="value">Sort: Value</option>
+                                <option value="pnl">Sort: P&L ₹</option>
+                                <option value="pnlpct">Sort: P&L %</option>
+                                <option value="weight">Sort: Weight</option>
+                                <option value="xirr">Sort: XIRR</option>
+                                <option value="stock">Sort: A–Z</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="tbl-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Stock</th>
+                                    <th>Qty</th>
+                                    <th>Avg cost</th>
+                                    <th>LTP</th>
+                                    <th>Value</th>
+                                    <th>Weight</th>
+                                    <th>P&L</th>
+                                    <th>P&L %</th>
+                                    <th>XIRR</th>
+                                    <th>Accounts</th>
+                                </tr>
+                            </thead>
+                            <tbody id="h-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SCORECARD -->
+            <div id="section-scorecard" class="section">
+                <div class="page-header">
+                    <div class="page-title">Management scorecard</div>
+                    <div class="page-sub">Score any promoter across capital allocation, integrity, and execution</div>
+                </div>
+                <div class="row2">
+                    <div class="form-group">
+                        <label>Company name</label>
+                        <input type="text" id="sc-co" placeholder="e.g. Caplin Point Labs">
+                    </div>
+                    <div class="form-group">
+                        <label>Promoter / MD</label>
+                        <input type="text" id="sc-pr" placeholder="e.g. C.C. Paarthipan">
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Capital allocation — 40 pts</div>
+                    <div class="row3">
+                        <div class="form-group">
+                            <label>ROIC trend (5yr)</label>
+                            <select id="sc-roic">
+                                <option value="10">Above WACC consistently (10)</option>
+                                <option value="7">Mostly above WACC (7)</option>
+                                <option value="4">Mixed / declining (4)</option>
+                                <option value="1">Below WACC (1)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>FCF conversion</label>
+                            <select id="sc-fcf">
+                                <option value="10">Strong, consistent (10)</option>
+                                <option value="7">Moderate (7)</option>
+                                <option value="4">Weak / lumpy (4)</option>
+                                <option value="1">Negative (1)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Capex discipline</label>
+                            <select id="sc-capex">
+                                <option value="10">Returns-focused (10)</option>
+                                <option value="7">Reasonable (7)</option>
+                                <option value="4">Aggressive / unclear (4)</option>
+                                <option value="1">Empire building (1)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Dividends / buybacks</label>
+                            <select id="sc-div">
+                                <option value="5">Consistent & growing (5)</option>
+                                <option value="3">Occasional (3)</option>
+                                <option value="1">None / erratic (1)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Acquisitions</label>
+                            <select id="sc-acq">
+                                <option value="5">Value-accretive or none (5)</option>
+                                <option value="3">Neutral (3)</option>
+                                <option value="1">Value-destructive (1)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Integrity & governance — 35 pts</div>
+                    <div class="row3">
+                        <div class="form-group">
+                            <label>Promoter pledge</label>
+                            <select id="sc-pledge">
+                                <option value="10">Zero (10)</option>
+                                <option value="7">Low, declining (7)</option>
+                                <option value="4">Moderate (4)</option>
+                                <option value="1">High / increasing (1)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Related party txns</label>
+                            <select id="sc-rpt">
+                                <option value="10">Minimal, arm's length (10)</option>
+                                <option value="7">Some, disclosed (7)</option>
+                                <option value="4">Significant (4)</option>
+                                <option value="1">Egregious (1)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Guidance vs actuals</label>
+                            <select id="sc-guid">
+                                <option value="8">Consistently beats (8)</option>
+                                <option value="6">Meets guidance (6)</option>
+                                <option value="3">Frequent misses (3)</option>
+                                <option value="1">Unreliable (1)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Auditor quality</label>
+                            <select id="sc-aud">
+                                <option value="7">Big 4, stable (7)</option>
+                                <option value="5">Mid-tier, stable (5)</option>
+                                <option value="2">Frequent changes (2)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Execution & communication — 25 pts</div>
+                    <div class="row3">
+                        <div class="form-group">
+                            <label>Concall quality</label>
+                            <select id="sc-cc">
+                                <option value="8">Candid, detailed (8)</option>
+                                <option value="5">Average (5)</option>
+                                <option value="2">Evasive / scripted (2)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Minority treatment</label>
+                            <select id="sc-min">
+                                <option value="9">Aligned, fair (9)</option>
+                                <option value="6">Neutral (6)</option>
+                                <option value="2">Extractive (2)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Skin in the game</label>
+                            <select id="sc-skin">
+                                <option value="8">High holding, buying (8)</option>
+                                <option value="5">Moderate (5)</option>
+                                <option value="2">Selling / low (2)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Additional context (optional)</label>
+                    <textarea id="sc-ctx" placeholder="Any notes, red flags, recent news about management..."></textarea>
+                </div>
+                <button class="btn btn-primary" id="sc-btn" onclick="runScorecard()">Generate scorecard</button>
+                <div id="sc-out" style="display:none;margin-top:1.5rem">
+                    <div class="card">
+                        <div class="score-ring">
+                            <div class="ring-wrap">
+                                <svg width="76" height="76" viewBox="0 0 76 76">
+                                    <circle cx="38" cy="38" r="30" fill="none" stroke="var(--bg3)" stroke-width="7"/>
+                                    <circle cx="38" cy="38" r="30" fill="none" stroke-width="7" stroke-linecap="round" id="sc-arc" stroke="var(--green)" stroke-dasharray="188.5" stroke-dashoffset="188.5"/>
+                                </svg>
+                                <div class="ring-score" id="sc-num" style="color:var(--green-text)">0</div>
+                            </div>
+                            <div>
+                                <div style="font-size:16px;font-weight:600;color:var(--text)" id="sc-verdict">—</div>
+                                <div style="font-size:12px;color:var(--text3);margin-top:3px" id="sc-sub"></div>
+                            </div>
+                        </div>
+                        <div class="ai-out" id="sc-ai"></div>
+                        <div style="margin-top:.75rem;text-align:right">
+                            <button class="copy-btn" onclick="copyEl('sc-ai')">Copy analysis</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONCALL -->
+            <div id="section-concall" class="section">
+                <div class="page-header">
+                    <div class="page-title">Concall analyser</div>
+                    <div class="page-sub">Upload transcript PDF — key guidance, red flags, contradiction check</div>
+                </div>
+                <div class="card">
+                    <div class="row2">
+                        <div class="form-group">
+                            <label>Company</label>
+                            <input type="text" id="cc-co" placeholder="e.g. Tara Chand Infralogistic">
+                        </div>
+                        <div class="form-group">
+                            <label>Quarter</label>
+                            <input type="text" id="cc-q" placeholder="e.g. Q3 FY25">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Transcript PDF</label>
+                        <div id="cc-zone" onclick="document.getElementById('cc-file').click()" style="border:1.5px dashed var(--border2);border-radius:var(--radius);padding:1.5rem;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg2)">
+                            <input type="file" id="cc-file" accept=".pdf" onchange="handleCCFile(this)" style="display:none">
+                            <div style="font-size:22px;margin-bottom:.5rem">📄</div>
+                            <div id="cc-lbl" style="font-size:13px;color:var(--text2);font-weight:500">Click to upload PDF</div>
+                            <div style="font-size:11px;color:var(--text3);margin-top:3px">Concall transcript</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Previous quarter guidance (for contradiction check)</label>
+                        <textarea id="cc-prev" placeholder="Paste key guidance from last quarter's concall..."></textarea>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-primary" id="cc-btn" onclick="runConcall()">Analyse transcript</button>
+                        <button class="btn btn-sm btn-ghost" onclick="clearConcall()">Clear</button>
+                    </div>
+                </div>
+                <div id="cc-out" style="display:none">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title" style="margin-bottom:0">Analysis</div>
+                            <button class="copy-btn" onclick="copyEl('cc-ai')">Copy</button>
+                        </div>
+                        <div class="ai-out" id="cc-ai"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REPORT -->
+            <div id="section-report" class="section">
+                <div class="page-header">
+                    <div class="page-title">Research report builder</div>
+                    <div class="page-sub">Raw notes in — publish-ready report and social snippets out</div>
+                </div>
+                <div class="card">
+                    <div class="row2">
+                        <div class="form-group">
+                            <label>Company / stock</label>
+                            <input type="text" id="rp-co" placeholder="e.g. CCL Products India">
+                        </div>
+                        <div class="form-group">
+                            <label>Report type</label>
+                            <select id="rp-type">
+                                <option value="initiation">Initiation of coverage</option>
+                                <option value="update">Quarterly update</option>
+                                <option value="thesis">Investment thesis</option>
+                                <option value="exit">Exit note</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SOURCE DOCUMENTS -->
+                    <div class="form-group">
+                        <label>Source documents (optional but recommended)</label>
+                        <div id="rp-drop-zone" style="border:1.5px dashed var(--border2);border-radius:var(--radius);padding:1.25rem;background:var(--bg2);transition:all .15s;cursor:pointer" onclick="document.getElementById('rp-files').click()" ondragover="event.preventDefault();this.style.borderColor='var(--green)'" ondragleave="this.style.borderColor=''" ondrop="handleRpDrop(event)">
+                            <input type="file" id="rp-files" multiple accept=".pdf,.xlsx,.xls,.csv,.txt" style="display:none" onchange="handleRpFiles(this.files)">
+                            <div style="text-align:center">
+                                <div style="font-size:22px;margin-bottom:.375rem">📎</div>
+                                <div style="font-size:13px;font-weight:500;color:var(--text2)">Drop files here or click to upload</div>
+                                <div style="font-size:11px;color:var(--text3);margin-top:3px">Concall transcripts · Earnings presentations · Annual reports · Any PDF or Excel</div>
+                            </div>
+                        </div>
+                        <div id="rp-file-list" style="margin-top:.625rem;display:flex;flex-wrap:wrap;gap:6px"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Your notes / thesis (optional if files uploaded)</label>
+                        <textarea id="rp-notes" style="min-height:120px" placeholder="Add your own observations, thesis points, valuation thoughts... AI will combine these with the uploaded documents"></textarea>
+                    </div>
+                    <div class="row3">
+                        <div class="form-group">
+                            <label>CMP (₹)</label>
+                            <input type="number" id="rp-cmp" placeholder="850">
+                        </div>
+                        <div class="form-group">
+                            <label>Target price (₹)</label>
+                            <input type="number" id="rp-tgt" placeholder="1100">
+                        </div>
+                        <div class="form-group">
+                            <label>View</label>
+                            <select id="rp-view">
+                                <option>BUY</option>
+                                <option>ACCUMULATE</option>
+                                <option>HOLD</option>
+                                <option>REDUCE</option>
+                                <option>SELL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Key risks</label>
+                        <textarea id="rp-risks" style="min-height:70px" placeholder="Main risks to the thesis..."></textarea>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-primary" id="rp-btn" onclick="runReport()">Build report</button>
+                        <button class="btn btn-sm btn-ghost" onclick="clearReport()">Clear</button>
+                    </div>
+                </div>
+                <div id="rp-out" style="display:none">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title" style="margin-bottom:0">Full report</div>
+                            <button class="copy-btn" onclick="copyEl('rp-full')">Copy</button>
+                        </div>
+                        <div class="ai-out" id="rp-full"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title" style="margin-bottom:0">Social media snippets</div>
+                            <button class="copy-btn" onclick="copyEl('rp-social')">Copy</button>
+                        </div>
+                        <div class="ai-out" id="rp-social"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- /main -->
+    </div>
+    <!-- /shell -->
+
+    <!-- MODALS -->
+    <div class="modal-bg" id="family-modal" onclick="if(event.target===this)closeModal('family-modal')">
+        <div class="modal">
+            <div class="modal-title">Add family / portfolio group</div>
+            <div class="form-group">
+                <label>Family name</label>
+                <input type="text" id="fm-name" placeholder="e.g. Family 1, HUF, Trust">
+            </div>
+            <div class="form-group">
+                <label>Description (optional)</label>
+                <input type="text" id="fm-desc" placeholder="e.g. Parents + self accounts">
+            </div>
+            <div class="modal-btns">
+                <button class="btn btn-sm btn-ghost" onclick="closeModal('family-modal')">Cancel</button>
+                <button class="btn btn-sm btn-primary" onclick="saveFamily()">Add family</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-bg" id="acct-modal" onclick="if(event.target===this)closeModal('acct-modal')">
+        <div class="modal">
+            <div class="modal-title" id="acct-modal-title">Add account</div>
+            <div class="form-group">
+                <label>Account holder name</label>
+                <input type="text" id="am-name" placeholder="e.g. Bhavesh Shah">
+            </div>
+            <div class="form-group">
+                <label>Broker</label>
+                <select id="am-broker">
+                    <option value="zerodha">Zerodha</option>
+                    <option value="hdfcsec">HDFC Securities</option>
+                    <option value="icicisec">ICICI Securities</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Client ID (optional)</label>
+                <input type="text" id="am-id" placeholder="e.g. WR3134">
+            </div>
+            <div class="modal-btns">
+                <button class="btn btn-sm btn-ghost" onclick="closeModal('acct-modal')">Cancel</button>
+                <button class="btn btn-sm btn-primary" onclick="saveAccount()">Add account</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-bg" id="txn-modal" onclick="if(event.target===this)closeModal('txn-modal')">
+        <div class="modal" style="max-width:640px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+                <div class="modal-title" style="margin-bottom:0" id="txn-title">Transactions</div>
+                <button class="btn btn-sm btn-ghost" onclick="closeModal('txn-modal')">✕</button>
+            </div>
+            <div id="txn-body"></div>
+        </div>
+    </div>
+
+    <script>
+    // ─── State ────────────────────────────────────────────────────────────────────
+    let families=JSON.parse(localStorage.getItem('inv3_fam')||'[]');
+    let builtHoldings=[];
+    let livePrices={};
+    let currentFilter='all';
+    let currentFamilyIdx=-1;
+    let ccFileData=null;
+    const BROKERS={zerodha:'Zerodha',hdfcsec:'HDFC Sec',icicisec:'ICICI Sec',other:'Other'};
+    function saveState(){localStorage.setItem('inv3_fam',JSON.stringify(families));}
+    function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+    // ─── Navigation ───────────────────────────────────────────────────────────────
+    function showSection(name,el){
+      document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
+      if(el)el.classList.add('active');
+      document.getElementById('section-'+name).classList.add('active');
+      if(name==='setup')renderFamilies();
+    }
+
+    function showPortfolio(filter,el){
+      document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
+      if(el)el.classList.add('active');
+      currentFilter=filter;
+      document.getElementById('section-portfolio').classList.add('active');
+      const f=families.find(f=>f.name===filter);
+      document.getElementById('port-title').textContent=filter==='all'?'All families — consolidated':filter;
+      document.getElementById('port-sub').textContent=filter==='all'?families.length+' famil'+(families.length!==1?'ies':'y'):f?(f.accounts.length+' account'+(f.accounts.length!==1?'s':'')):'';
+      if(builtHoldings.length)renderTable();
+      else document.getElementById('h-body').innerHTML='<tr><td colspan="10" style="text-align:center;padding:2.5rem;color:var(--text3)">Go to Setup → Build portfolio first</td></tr>';
+    }
+
+    function updateFamilyNav(){
+      document.getElementById('family-nav').innerHTML=families.map(f=>`
+        <div class="nav-item sub" onclick="showPortfolio('${f.name}',this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          ${f.name}
+        </div>`).join('');
+    }
+
+    // ─── Claude API ───────────────────────────────────────────────────────────────
+    async function callClaude(messages,system,onChunk){
+      const key=localStorage.getItem('inv_api_key')||'';
+      if(!key){throw new Error('No API key set — add your Anthropic API key in the sidebar');}
+      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,stream:true,system,messages})});
+      if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API error');}
+      const reader=res.body.getReader();const dec=new TextDecoder();let full='';
+      while(true){const{done,value}=await reader.read();if(done)break;for(const line of dec.decode(value).split('\n').filter(l=>l.startsWith('data: '))){const d=line.slice(6);if(d==='[DONE]')continue;try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;onChunk(full);}}catch(e){}}}
+      return full;
+    }
+    function md(t){return t.replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^- (.+)$/gm,'<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/g,'<ul>$&</ul>');}
+    function copyEl(id){navigator.clipboard.writeText(document.getElementById(id).innerText);const b=document.getElementById(id).closest('.card')?.querySelector('.copy-btn');if(b){b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',2000);}}
+
+    // ─── XIRR ─────────────────────────────────────────────────────────────────────
+    function calcXIRR(txns,currentValue){
+      if(!txns||txns.length<1)return null;
+      const cfs=[],dts=[];
+      txns.forEach(t=>{cfs.push(t.type==='BUY'?-t.value:t.value);dts.push(new Date(t.date));});
+      cfs.push(currentValue);dts.push(new Date());
+      const t0=dts[0].getTime();
+      function npv(r){return cfs.reduce((s,cf,i)=>s+cf/Math.pow(1+r,(dts[i].getTime()-t0)/(365*24*3600*1000)),0);}
+      let lo=-0.999,hi=10;
+      for(let i=0;i<150;i++){const mid=(lo+hi)/2;const v=npv(mid);if(Math.abs(v)<0.5)return mid;if(v>0)lo=mid;else hi=mid;}
+      return(lo+hi)/2;
+    }
+
+    // ─── PRICES ───────────────────────────────────────────────────────────────────
+    function normSym(sym){
+      return String(sym).replace(/EQNR$/i,'').replace(/EQN$/i,'').replace(/EQ$/i,'').replace(/-EQ$/i,'').replace(/-BE$/i,'').replace(/-SM$/i,'').replace(/-SME$/i,'').replace(/-N$/i,'').replace(/\s+/g,'').toUpperCase().trim();
+    }
+    async function yFetch(ticker){
+      for(const base of ['https://query1.finance.yahoo.com','https://query2.finance.yahoo.com']){
+        try{
+          const r=await fetch(`${base}/v8/finance/chart/${ticker}?interval=1d&range=1d`,{signal:AbortSignal.timeout(6000)});
+          if(!r.ok)continue;
+          const j=await r.json();const m=j.chart?.result?.[0]?.meta;
+          if(!m||!m.regularMarketPrice)continue;
+          const prev=m.chartPreviousClose||m.previousClose||m.regularMarketPrice;
+          return{price:m.regularMarketPrice,change:m.regularMarketPrice-prev,changeP:prev?(m.regularMarketPrice-prev)/prev*100:0,source:ticker.endsWith('.NS')?'NSE':'BSE',time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
+        }catch(e){continue;}
+      }
+      return null;
+    }
+    async function fetchPrice(symbol){
+      const sym=normSym(symbol);
+      for(const t of[sym+'.NS',sym+'.BO',sym+'-SM.NS',sym+'-SM.BO']){
+        const p=await yFetch(t);if(p)return p;
+      }
+      return null;
+    }
+    async function refreshPrices(){
+      const syms=[...new Set(builtHoldings.map(h=>h.stock))];
+      if(!syms.length)return;
+      const btn=document.getElementById('refresh-btn');
+      btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Fetching…';
+      document.getElementById('price-status').textContent='Fetching prices…';
+      let done=0;
+      await Promise.all(syms.map(async sym=>{
+        const p=await fetchPrice(sym);
+        if(p)livePrices[normSym(sym)]=p;
+        document.getElementById('price-status').textContent=`${++done}/${syms.length} fetched`;
+      }));
+      const got=Object.keys(livePrices).length;
+      document.getElementById('price-status').textContent=`${got}/${syms.length} prices · ${new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
+      btn.disabled=false;btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg> Refresh prices';
+      renderTable();renderStatsRow();
+    }
+
+    // ─── PARSE ────────────────────────────────────────────────────────────────────
+    function parseZerodha(data){
+      const txns=[];let hi=-1;
+      for(let i=0;i<data.length;i++){
+        // Find header row - Symbol is in column index 1
+        const row=data[i];
+        if(row&&(row[1]==='Symbol'||String(row[1]||'').trim()==='Symbol')){hi=i;break;}
+      }
+      if(hi<0){
+        // Fallback: scan for any row with 'symbol' in it
+        for(let i=0;i<data.length;i++){
+          const flat=data[i].join(',').toLowerCase();
+          if(flat.includes('symbol')&&flat.includes('trade type')){hi=i;break;}
+        }
+      }
+      if(hi<0) return txns;
+      for(let i=hi+1;i<data.length;i++){
+        const r=data[i];
+        if(!r||r.every(v=>v===null||v===undefined||v==='')) continue;
+        const sym=r[1]; const date=r[3]; const type=r[7];
+        const qty=parseFloat(String(r[9]||'').replace(/,/g,''))||0;
+        const price=parseFloat(String(r[10]||'').replace(/,/g,''))||0;
+        if(!sym||!date||!type||!qty||!price) continue;
+        // Handle date - could be string 'YYYY-MM-DD' or Date object
+        let d;
+        if(date instanceof Date) d=date;
+        else{ d=new Date(String(date)); if(isNaN(d.getTime())) d=new Date(String(date).replace(/-/g,'/')); }
+        if(isNaN(d.getTime())) continue;
+        txns.push({stock:normSym(String(sym)),date:d,type:String(type).toLowerCase().includes('buy')?'BUY':'SELL',qty,price,value:qty*price});
+      }
+      return txns;
+    }
+    function parseHDFC(data){
+      const txns=[];let hi=-1;
+      for(let i=0;i<data.length;i++){if(String(data[i][0]||'').toLowerCase().includes('date')){hi=i;break;}}
+      const start=hi>=0?hi+1:1;
+      for(let i=start;i<data.length;i++){
+        const r=data[i];const sym=r[1];const dateStr=r[0];const action=r[2];const qty=parseFloat(r[3])||0;const price=parseFloat(r[4])||0;
+        if(!sym||!dateStr||!action||!qty||!price)continue;
+        const d=new Date(dateStr);if(isNaN(d.getTime()))continue;
+        txns.push({stock:normSym(String(sym)),date:d,type:String(action).toUpperCase().includes('BUY')?'BUY':'SELL',qty,price,value:qty*price});
+      }
+      return txns;
+    }
+    function parseICICI(data){
+      const txns=[];let hi=-1;
+      for(let i=0;i<data.length;i++){if(data[i][0]==='Name'){hi=i;break;}}
+      if(hi<0)return txns;
+      for(let i=hi+1;i<data.length;i++){
+        const r=data[i];let sym=r[0];const dateStr=r[1];const action=r[2];const qty=parseFloat(r[5])||parseFloat(r[4])||0;const price=parseFloat(String(r[7]).trim())||0;
+        if(!sym||!dateStr||!action||!qty||!price)continue;
+        const d=new Date(dateStr.replace(/-/g,' '));if(isNaN(d.getTime()))continue;
+        txns.push({stock:normSym(String(sym)),date:d,type:String(action).toUpperCase().includes('BUY')?'BUY':'SELL',qty,price,value:qty*price});
+      }
+      return txns;
+    }
+    function parseGeneric(data){
+      const txns=[];let hi=-1;
+      for(let i=0;i<Math.min(20,data.length);i++){const r=data[i].map(c=>String(c||'')).join(',').toLowerCase();if(r.includes('symbol')||r.includes('stock')){hi=i;break;}}
+      if(hi<0)return txns;
+      const hdr=data[hi].map(c=>String(c||'').toLowerCase());
+      const si=hdr.findIndex(h=>h.includes('symbol')||h.includes('stock')||h.includes('name'));
+      const di=hdr.findIndex(h=>h.includes('date'));
+      const ti=hdr.findIndex(h=>h.includes('type')||h.includes('action'));
+      const qi=hdr.findIndex(h=>h.includes('qty')||h.includes('quant'));
+      const pi=hdr.findIndex(h=>h.includes('price'));
+      if(si<0||di<0||qi<0||pi<0)return txns;
+      for(let i=hi+1;i<data.length;i++){
+        const r=data[i];const sym=normSym(String(r[si]||''));const qty=parseFloat(r[qi])||0;const price=parseFloat(r[pi])||0;
+        if(!sym||!qty||!price)continue;
+        const d=new Date(r[di]);if(isNaN(d.getTime()))continue;
+        txns.push({stock:sym,date:d,type:String(r[ti]||'buy').toLowerCase().includes('sell')?'SELL':'BUY',qty,price,value:qty*price});
+      }
+      return txns;
+    }
+    function readFile(file,broker){
+      return new Promise(resolve=>{
+        const reader=new FileReader();
+        reader.onload=e=>{
+          try{
+            const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+            const ws=wb.Sheets[wb.SheetNames[0]];
+            const data=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
+            let txns=[];
+            if(broker==='zerodha')txns=parseZerodha(data);
+            else if(broker==='hdfcsec')txns=parseHDFC(data);
+            else if(broker==='icicisec')txns=parseICICI(data);
+            else txns=parseGeneric(data);
+            resolve(txns);
+          }catch(err){console.error(err);resolve([]);}
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    // ─── BUILD ────────────────────────────────────────────────────────────────────
+    async function buildAll(){
+      const all=families.flatMap((f,fi)=>f.accounts.map((a,ai)=>({...a,family:f.name,fi,ai})));
+      const withFiles=all.filter(a=>a.file||(a.files&&a.files.length));
+      if(!withFiles.length){alert('Upload at least one broker statement first');return;}
+      const btn=document.getElementById('build-btn');
+      btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Building…';
+      const allTxns=[];
+
+      for(const acct of withFiles){
+        const filesToProcess = acct.files && acct.files.length ? acct.files : [acct.file];
+        for(const file of filesToProcess){
+          if(!file) continue;
+          let broker = acct.broker;
+          if(broker==='other'){
+            const fn=file.name.toLowerCase();
+            if(fn.includes('tradebook')||fn.includes('zerodha')) broker='zerodha';
+            else if(fn.includes('hdfc')) broker='hdfcsec';
+            else if(fn.includes('icici')||fn.includes('orderlog')) broker='icicisec';
+          }
+          const txns=await readFile(file, broker);
+          const buys=txns.filter(t=>t.type==='BUY').length;
+          const sells=txns.filter(t=>t.type==='SELL').length;
+
+          txns.forEach(t=>allTxns.push({...t,family:acct.family,account:acct.name,broker}));
+        }
+      }
+
+      const stockMap={};
+      allTxns.forEach(t=>{
+        if(!stockMap[t.stock])stockMap[t.stock]={stock:t.stock,txns:[],accounts:new Set()};
+        stockMap[t.stock].txns.push(t);
+        stockMap[t.stock].accounts.add(`${t.account} (${BROKERS[t.broker]||t.broker})`);
+      });
+      builtHoldings=[];
+      console.log('stockMap keys:', Object.keys(stockMap).length, 'allTxns:', allTxns.length);
+      Object.values(stockMap).forEach(s=>{
+        const sorted=s.txns.sort((a,b)=>new Date(a.date)-new Date(b.date));
+        let qty=0,totalCost=0;
+        sorted.forEach(t=>{
+          if(t.type==='BUY'){qty+=t.qty;totalCost+=t.value;}
+          else{const avg=qty>0?totalCost/qty:0;qty-=t.qty;totalCost=Math.max(0,qty*avg);}
+          if(qty<0.001){qty=0;totalCost=0;}
+        });
+        if(qty<0.001)return;
+        builtHoldings.push({stock:s.stock,qty,avgCost:qty>0?totalCost/qty:0,invested:totalCost,families:[...new Set(s.txns.map(t=>t.family))],accounts:[...s.accounts],txns:sorted});
+      });
+      console.log('builtHoldings:', builtHoldings.length, builtHoldings.slice(0,5).map(h=>h.stock+':'+h.qty));
+      alert('Parsed ' + allTxns.length + ' transactions → ' + builtHoldings.length + ' holdings');
+      await refreshPrices();
+      showPortfolio('all',document.getElementById('nav-all'));
+
+      btn.disabled=false;btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Build portfolio';
+    }
+
+    // ─── RENDER TABLE ─────────────────────────────────────────────────────────────
+    const fmt=n=>n>=10000000?(n/10000000).toFixed(1)+'Cr':n>=100000?(n/100000).toFixed(1)+'L':n>=1000?(n/1000).toFixed(1)+'K':n.toFixed(0);
+    const fmtP=n=>(n>=0?'+':'')+n.toFixed(1)+'%';
+
+    function renderTable(){
+      const q=(document.getElementById('h-search')?.value||'').toLowerCase();
+      const sortBy=document.getElementById('h-sort')?.value||'value';
+      let data=builtHoldings.filter(h=>(currentFilter==='all'||h.families.includes(currentFilter))&&(!q||h.stock.toLowerCase().includes(q)));
+      const totalInv=data.reduce((s,h)=>s+h.invested,0);
+      let totVal=0,totPnl=0;
+      data=data.map(h=>{
+        const ltp=livePrices[normSym(h.stock)];
+        const val=ltp?h.qty*ltp.price:h.invested;
+        const pnl=ltp?val-h.invested:0;
+        const pnlPct=h.invested>0?pnl/h.invested*100:0;
+        const weight=totalInv>0?h.invested/totalInv*100:0;
+        const xirr=calcXIRR(h.txns,val);
+        totVal+=val;totPnl+=pnl;
+        return{...h,ltp,val,pnl,pnlPct,weight,xirr};
+      });
+      data.sort((a,b)=>{
+        if(sortBy==='stock')return a.stock.localeCompare(b.stock);
+        if(sortBy==='pnl')return b.pnl-a.pnl;
+        if(sortBy==='pnlpct')return b.pnlPct-a.pnlPct;
+        if(sortBy==='weight')return b.weight-a.weight;
+        if(sortBy==='xirr')return(b.xirr||0)-(a.xirr||0);
+        return b.val-a.val;
+      });
+      document.getElementById('h-body').innerHTML=data.map(h=>`
+        <tr class="clickable" onclick="showTxns('${h.stock}')">
+          <td><span style="font-weight:600">${h.stock}</span></td>
+          <td class="mono">${h.qty.toFixed(0)}</td>
+          <td class="mono">₹${h.avgCost.toFixed(1)}</td>
+          <td>${h.ltp?`<div class="mono" style="font-weight:500">₹${h.ltp.price.toFixed(1)}</div><div class="price-pill ${h.ltp.changeP>=0?'up':'dn'}">${fmtP(h.ltp.changeP)}</div>`:'<span class="price-pill na">—</span>'}</td>
+          <td class="mono" style="font-weight:500">₹${fmt(h.val)}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="mono">${h.weight.toFixed(1)}%</span>
+              <div class="wbar-bg"><div class="wbar" style="width:${Math.min(h.weight*4,100)}%"></div></div>
+            </div>
+          </td>
+          <td class="mono ${h.pnl>=0?'pos':'neg'}">${h.ltp?(h.pnl>=0?'+':'')+'₹'+fmt(Math.abs(h.pnl)):'—'}</td>
+          <td class="mono ${h.pnlPct>=0?'pos':'neg'}">${h.ltp?fmtP(h.pnlPct):'—'}</td>
+          <td class="mono ${(h.xirr||0)>=0?'pos':'neg'}">${h.xirr!=null?(h.xirr*100).toFixed(1)+'%':'—'}</td>
+          <td style="font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.accounts.join(', ')}</td>
+        </tr>`).join('');
+      renderStatsRow(data,totalInv,totVal,totPnl);
+    }
+
+    function renderStatsRow(data,totalInv,totVal,totPnl){
+      if(!data){
+        const filter=currentFilter;
+        const d=builtHoldings.filter(h=>filter==='all'||h.families.includes(filter));
+        const ti=d.reduce((s,h)=>s+h.invested,0);
+        let tv=0,tp=0;
+        d.forEach(h=>{const ltp=livePrices[normSym(h.stock)];const val=ltp?h.qty*ltp.price:h.invested;tv+=val;tp+=ltp?val-h.invested:0;});
+        renderStatsRow(d,ti,tv,tp);return;
+      }
+      const pnlPct=totalInv>0?totPnl/totalInv*100:0;
+      document.getElementById('port-stats').innerHTML=`
+        <div class="stat-box"><div class="stat-n">₹${fmt(totalInv)}</div><div class="stat-l">Invested</div></div>
+        <div class="stat-box"><div class="stat-n">₹${fmt(totVal)}</div><div class="stat-l">Current value</div></div>
+        <div class="stat-box"><div class="stat-n ${totPnl>=0?'pos':'neg'}">${totPnl>=0?'+':''}₹${fmt(Math.abs(totPnl))}</div><div class="stat-l">Total P&L</div></div>
+        <div class="stat-box"><div class="stat-n ${pnlPct>=0?'pos':'neg'}">${pnlPct>=0?'+':''} ${pnlPct.toFixed(1)}%</div><div class="stat-l">Return</div></div>
+        <div class="stat-box"><div class="stat-n">${data.length}</div><div class="stat-l">Holdings</div></div>`;
+    }
+
+    // ─── TXN MODAL ────────────────────────────────────────────────────────────────
+    function showTxns(stock){
+      const h=builtHoldings.find(h=>h.stock===stock);if(!h)return;
+      const ltp=livePrices[normSym(stock)];
+      const val=ltp?h.qty*ltp.price:h.invested;
+      const pnl=ltp?val-h.invested:0;
+      const xirr=calcXIRR(h.txns,val);
+      document.getElementById('txn-title').textContent=stock+(ltp?' · ₹'+ltp.price.toFixed(1)+' ('+fmtP(ltp.changeP)+')':'  '  );
+      document.getElementById('txn-body').innerHTML=`
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem">
+          <div class="stat-box"><div class="stat-n mono">${h.qty.toFixed(0)}</div><div class="stat-l">Holding qty</div></div>
+          <div class="stat-box"><div class="stat-n mono">₹${h.avgCost.toFixed(1)}</div><div class="stat-l">Avg cost</div></div>
+          <div class="stat-box"><div class="stat-n mono ${pnl>=0?'pos':'neg'}">${ltp?(pnl>=0?'+':'')+'₹'+fmt(Math.abs(pnl)):'—'}</div><div class="stat-l">P&L</div></div>
+          <div class="stat-box"><div class="stat-n mono ${(xirr||0)>=0?'pos':'neg'}">${xirr!=null?(xirr*100).toFixed(1)+'%':'—'}</div><div class="stat-l">XIRR</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:.875rem;display:flex;gap:8px;flex-wrap:wrap">
+          <span>Families: ${h.families.join(', ')}</span>
+          <span>·</span>
+          <span>Accounts: ${h.accounts.join(', ')}</span>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Date</th><th>Type</th><th>Qty</th><th>Price</th><th>Value</th><th>Account</th></tr></thead>
+          <tbody>${h.txns.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t=>`<tr>
+            <td class="mono">${new Date(t.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})}</td>
+            <td><span class="badge ${t.type==='BUY'?'badge-green':'badge-red'}">${t.type}</span></td>
+            <td class="mono">${t.qty.toFixed(0)}</td>
+            <td class="mono">₹${parseFloat(t.price).toFixed(2)}</td>
+            <td class="mono">₹${fmt(t.value)}</td>
+            <td style="font-size:11px;color:var(--text3)">${t.account||'—'} (${BROKERS[t.broker]||t.broker||'—'})</td>
+          </tr>`).join('')}</tbody>
+        </table></div>`;
+      document.getElementById('txn-modal').classList.add('open');
+    }
+
+    // ─── FAMILY/ACCOUNT MGMT ──────────────────────────────────────────────────────
+    function openFamilyModal(){document.getElementById('fm-name').value='';document.getElementById('fm-desc').value='';document.getElementById('family-modal').classList.add('open');}
+    function saveFamily(){
+      const n=document.getElementById('fm-name').value.trim();if(!n){alert('Enter a name');return;}
+      families.push({name:n,desc:document.getElementById('fm-desc').value.trim(),accounts:[],collapsed:false});
+      saveState();closeModal('family-modal');renderFamilies();updateFamilyNav();updateBulkFamilyDropdown();
+    }
+    function openAcctModal(fi){
+      currentFamilyIdx=fi;
+      document.getElementById('acct-modal-title').textContent='Add account — '+families[fi].name;
+      document.getElementById('am-name').value='';document.getElementById('am-id').value='';
+      document.getElementById('acct-modal').classList.add('open');
+    }
+    function saveAccount(){
+      const n=document.getElementById('am-name').value.trim();if(!n){alert('Enter a name');return;}
+      families[currentFamilyIdx].accounts.push({name:n,broker:document.getElementById('am-broker').value,clientId:document.getElementById('am-id').value.trim(),file:null,fileName:null});
+      saveState();closeModal('acct-modal');renderFamilies();
+    }
+    function deleteFamily(i){if(!confirm('Delete '+families[i].name+'?'))return;families.splice(i,1);saveState();renderFamilies();updateFamilyNav();}
+    function deleteAccount(fi,ai){families[fi].accounts.splice(ai,1);saveState();renderFamilies();}
+    function toggleFamily(i){families[i].collapsed=!families[i].collapsed;renderFamilies();}
+    function handlePortFiles(fi,ai,input){
+      const newFiles=[...input.files];if(!newFiles.length)return;
+      if(!families[fi].accounts[ai].files) families[fi].accounts[ai].files=[];
+      newFiles.forEach(f=>{
+        if(!families[fi].accounts[ai].files.find(x=>x.name===f.name)){
+          families[fi].accounts[ai].files.push(f);
+        }
+      });
+      // Keep legacy single-file fields for backward compat
+      families[fi].accounts[ai].file=families[fi].accounts[ai].files[0];
+      families[fi].accounts[ai].fileName=families[fi].accounts[ai].files[0]?.name||null;
+      input.value='';
+      renderFamilies();
+    }
+    function removePortFile(fi,ai,fIdx){
+      families[fi].accounts[ai].files.splice(fIdx,1);
+      families[fi].accounts[ai].file=families[fi].accounts[ai].files[0]||null;
+      families[fi].accounts[ai].fileName=families[fi].accounts[ai].files[0]?.name||null;
+      renderFamilies();
+    }
+
+    function clearAll(){
+      if(!confirm('This will delete all families, accounts and data. Are you sure?'))return;
+      families=[];builtHoldings=[];livePrices={};
+      localStorage.removeItem('inv3_fam');
+      renderFamilies();updateFamilyNav();
+      showSection('setup',document.getElementById('nav-setup'));
+    }
+
+    function renderFamilies(){
+      const el=document.getElementById('families-list');
+      const total=families.reduce((s,f)=>s+f.accounts.length,0);
+      document.getElementById('port-summary').textContent=families.length+' famil'+(families.length!==1?'ies':'y')+' · '+total+' account'+(total!==1?'s':'');
+      if(!families.length){
+        el.innerHTML='<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--bg4)" stroke-width="1.5" style="margin:0 auto 1rem;display:block"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><strong>No families yet</strong>Add a family group to start building your portfolio</div>';
+        return;
+      }
+      el.innerHTML=families.map((f,fi)=>`
+        <div class="family-card">
+          <div class="family-header" onclick="toggleFamily(${fi})">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:32px;height:32px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text2)">${f.name.charAt(0)}</div>
+              <div>
+                <div class="family-name">${f.name} <span class="badge badge-blue" style="font-size:10px;margin-left:4px">${f.accounts.length} acct${f.accounts.length!==1?'s':''}</span></div>
+                ${f.desc?`<div class="family-desc">${f.desc}</div>`:''}
               </div>
             </div>
-            <div id="pf-log-${fi}-${ai}" style="${(a.files&&a.files.length)?'':'display:none'}">
-              <div style="display:flex;flex-wrap:wrap;gap:5px">${(a.files||[]).map((f,fIdx)=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--green-dim);border:1px solid var(--green);border-radius:20px;font-size:11px;color:var(--green-text)">${f.name.length>30?f.name.slice(0,27)+'...':f.name}<button onclick="removePortFile(${fi},${ai},${fIdx})" style="background:none;border:none;cursor:pointer;color:var(--green-text);padding:0;font-size:11px;margin-left:3px">X</button></span>`).join('')}</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button class="btn btn-sm" onclick="event.stopPropagation();openAcctModal(${fi})">+ Account</button>
+              <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteFamily(${fi})">Delete</button>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" style="transition:transform .15s;transform:rotate(${f.collapsed?'0':'180'}deg)"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
-            </div>
-          </div>`).join('')}
-      </div>`:''}
-    </div>`).join('');
-}
-
-// ─── SCORECARD ────────────────────────────────────────────────────────────────
-async function runScorecard(){
-  const co=document.getElementById('sc-co').value.trim();if(!co){alert('Enter company name');return;}
-  const sc={roic:+document.getElementById('sc-roic').value,fcf:+document.getElementById('sc-fcf').value,capex:+document.getElementById('sc-capex').value,div:+document.getElementById('sc-div').value,acq:+document.getElementById('sc-acq').value,pledge:+document.getElementById('sc-pledge').value,rpt:+document.getElementById('sc-rpt').value,guid:+document.getElementById('sc-guid').value,aud:+document.getElementById('sc-aud').value,cc:+document.getElementById('sc-cc').value,min:+document.getElementById('sc-min').value,skin:+document.getElementById('sc-skin').value};
-  const total=Object.values(sc).reduce((a,b)=>a+b,0);
-  const btn=document.getElementById('sc-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Scoring…';
-  document.getElementById('sc-out').style.display='block';document.getElementById('sc-ai').innerHTML='<span class="spinner"></span>';
-  const arc=document.getElementById('sc-arc');arc.style.strokeDashoffset=188.5-(total/100)*188.5;
-  const col=total>=75?'var(--green-text)':total>=50?'var(--amber)':'var(--red)';
-  arc.style.stroke=col;document.getElementById('sc-num').style.color=col;
-  document.getElementById('sc-num').textContent=total;
-  document.getElementById('sc-verdict').textContent=total>=80?'Excellent management':total>=65?'Good management':total>=50?'Average management':total>=35?'Below average':'Poor management';
-  document.getElementById('sc-sub').textContent=total+'/100 — '+co+(document.getElementById('sc-pr').value?' · '+document.getElementById('sc-pr').value:'');
-  try{
-    await callClaude([{role:'user',content:`Scorecard for ${co}: Total ${total}/100. ROIC ${sc.roic}/10, FCF ${sc.fcf}/10, Capex ${sc.capex}/10, Div ${sc.div}/5, Acq ${sc.acq}/5, Pledge ${sc.pledge}/10, RPT ${sc.rpt}/10, Guidance ${sc.guid}/8, Auditor ${sc.aud}/7, Concall ${sc.cc}/8, Minority ${sc.min}/9, Skin ${sc.skin}/8. Context: ${document.getElementById('sc-ctx').value||'None'}`}],
-      'Sharp Indian equity analyst. ## Verdict | ## Key strengths | ## Key concerns | ## Watch list. Use 🟢🟡🔴. Direct, specific, reference actual scores.',
-      t=>{document.getElementById('sc-ai').innerHTML=md(t);}
-    );
-  }catch(e){document.getElementById('sc-ai').textContent='Error: '+e.message;}
-  btn.disabled=false;btn.textContent='Generate scorecard';
-}
-
-// ─── CONCALL ──────────────────────────────────────────────────────────────────
-function handleCCFile(input){
-  const f=input.files[0];if(!f)return;
-  const zone=document.getElementById('cc-zone');
-  document.getElementById('cc-lbl').textContent=f.name;
-  zone.style.borderColor='var(--green)';zone.style.background='var(--green-dim)';
-  const r=new FileReader();r.onload=e=>{ccFileData={data:e.target.result.split(',')[1]};};r.readAsDataURL(f);
-}
-function clearConcall(){
-  ccFileData=null;
-  document.getElementById('cc-lbl').textContent='Click to upload PDF';
-  const zone=document.getElementById('cc-zone');zone.style.borderColor='';zone.style.background='';
-  ['cc-co','cc-q','cc-prev'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('cc-out').style.display='none';
-  document.getElementById('cc-file').value='';
-}
-async function runConcall(){
-  if(!ccFileData){alert('Upload a PDF transcript first');return;}
-  const co=document.getElementById('cc-co').value.trim();
-  const btn=document.getElementById('cc-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Analysing…';
-  document.getElementById('cc-out').style.display='block';document.getElementById('cc-ai').innerHTML='<span class="spinner"></span>';
-  const prev=document.getElementById('cc-prev').value.trim();const q=document.getElementById('cc-q').value.trim();
-  try{
-    await callClaude([{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:ccFileData.data}},{type:'text',text:`Analyse concall for ${co||'company'}${q?' ('+q+')':''}.${prev?'\n\nPrev guidance:\n'+prev:''}\n\n## Key guidance | ## Guidance vs previous | ## Red flags 🔴 | ## Positive signals 🟢 | ## Watch items 🟡 | ## Notable Q&A | ## Verdict`}]}],
-      'Sharp Indian equity analyst. Quote actual transcript lines. Spot what management avoids. Be specific and direct.',
-      t=>{document.getElementById('cc-ai').innerHTML=md(t);}
-    );
-  }catch(e){document.getElementById('cc-ai').textContent='Error: '+e.message;}
-  btn.disabled=false;btn.textContent='Analyse transcript';
-}
-
-// ─── REPORT ───────────────────────────────────────────────────────────────────
-function clearReport(){['rp-co','rp-notes','rp-cmp','rp-tgt','rp-risks'].forEach(id=>document.getElementById(id).value='');document.getElementById('rp-out').style.display='none';rpFiles=[];renderRpFileList();}
-async function runReport(){
-  const co=document.getElementById('rp-co').value.trim();
-  const notes=document.getElementById('rp-notes').value.trim();
-  if(!co&&!rpFiles.length){alert('Enter a company name');return;}
-  if(!co){alert('Enter a company name');return;}
-  if(!notes&&!rpFiles.length){alert('Add some notes or upload source documents');return;}
-
-  const cmp=document.getElementById('rp-cmp').value;const tgt=document.getElementById('rp-tgt').value;
-  const view=document.getElementById('rp-view').value;const type=document.getElementById('rp-type').value;
-  const risks=document.getElementById('rp-risks').value.trim();
-  const upside=cmp&&tgt?((tgt-cmp)/cmp*100).toFixed(1)+'%':'';
-  const btn=document.getElementById('rp-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Building…';
-  document.getElementById('rp-out').style.display='block';
-  document.getElementById('rp-full').innerHTML='<span class="spinner"></span>';
-  document.getElementById('rp-social').innerHTML='<span style="color:var(--text3)">Waiting for report…</span>';
-
-  const instruction = `Write a ${type} research note for ${co}.
-${notes?'Analyst notes: '+notes:''}
-CMP: ₹${cmp||'?'}, Target: ₹${tgt||'?'}${upside?', Upside: '+upside:''}, View: ${view}.
-${risks?'Risks: '+risks:''}
-${rpFiles.length?'Source documents are attached — extract key data, financials, and insights from them.':''}
-Structure: ## ${co} — ${type} | ## Investment thesis | ## Business quality & moat | ## Key financials | ## Valuation | ## Risks | ## Conclusion`;
-
-  // Build message content — attach PDFs, inline text files
-  const content = [];
-  for(const f of rpFiles){
-    if(f.fileType==='pdf'){
-      content.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:f.data},title:f.name});
-    } else if(f.data){
-      content.push({type:'text',text:`--- ${f.name} ---
-${f.data}
----`});
+          </div>
+          ${!f.collapsed?`<div class="family-body">
+            ${!f.accounts.length?'<div style="font-size:12px;color:var(--text3);text-align:center;padding:.5rem">No accounts yet — click + Account to add</div>':''}
+            ${f.accounts.map((a,ai)=>`
+              <div class="acct-card" style="flex-direction:column;align-items:stretch;gap:8px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                  <div>
+                    <div class="acct-name">${a.name}</div>
+                  <div class="acct-broker-tag">${BROKERS[a.broker]||a.broker}${a.clientId?' · '+a.clientId:''}</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-weight:500;color:var(--text2);background:var(--bg);transition:all .12s;white-space:nowrap">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Upload files
+                      <input type="file" id="pf-${fi}-${ai}" accept=".csv,.xlsx,.xls" multiple style="display:none" onchange="handlePortFiles(${fi},${ai},this)">
+                    </label>
+                    <button class="btn btn-sm btn-danger" onclick="deleteAccount(${fi},${ai})">X</button>
+                  </div>
+                </div>
+                <div id="pf-log-${fi}-${ai}" style="${(a.files&&a.files.length)?'':'display:none'}">
+                  <div style="display:flex;flex-wrap:wrap;gap:5px">${(a.files||[]).map((f,fIdx)=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--green-dim);border:1px solid var(--green);border-radius:20px;font-size:11px;color:var(--green-text)">${f.name.length>30?f.name.slice(0,27)+'...':f.name}<button onclick="removePortFile(${fi},${ai},${fIdx})" style="background:none;border:none;cursor:pointer;color:var(--green-text);padding:0;font-size:11px;margin-left:3px">X</button></span>`).join('')}</div>
+                </div>
+                </div>
+              </div>`).join('')}
+          </div>`:''}
+        </div>`).join('');
     }
-  }
-  content.push({type:'text',text:instruction});
 
-  try{
-    await callClaude([{role:'user',content:content.length===1?instruction:content}],
-      'Sharp Indian equity analyst. Direct, data-driven, no filler. Extract actual data from uploaded documents — specific numbers, management quotes, key metrics. Write like the best Indian investing blogs. Use ₹. Confident and specific.',
-      t=>{document.getElementById('rp-full').innerHTML=md(t);}
-    );
-    document.getElementById('rp-social').innerHTML='<span class="spinner"></span> Writing snippets…';
-    const rep=document.getElementById('rp-full').innerText.slice(0,2000);
-    await callClaude([{role:'user',content:`From this note on ${co}:\n\n${rep}\n\nWrite:\n1. Twitter/X opener (max 280 chars, punchy, no hashtags)\n2. LinkedIn post (3-4 paras, end with question)\n3. Short take (2-3 sentences, plain language)\n\nDirect voice. Sound like a smart investor, not marketing.`}],
-      'Sharp investing content writer for Indian equity investor blog.',
-      t=>{document.getElementById('rp-social').innerHTML=md(t);}
-    );
-  }catch(e){document.getElementById('rp-full').textContent='Error: '+e.message;}
-  btn.disabled=false;btn.textContent='Build report';
-}
+    // ─── SCORECARD ────────────────────────────────────────────────────────────────
+    async function runScorecard(){
+      const co=document.getElementById('sc-co').value.trim();if(!co){alert('Enter company name');return;}
+      const sc={roic:+document.getElementById('sc-roic').value,fcf:+document.getElementById('sc-fcf').value,capex:+document.getElementById('sc-capex').value,div:+document.getElementById('sc-div').value,acq:+document.getElementById('sc-acq').value,pledge:+document.getElementById('sc-pledge').value,rpt:+document.getElementById('sc-rpt').value,guid:+document.getElementById('sc-guid').value,aud:+document.getElementById('sc-aud').value,cc:+document.getElementById('sc-cc').value,min:+document.getElementById('sc-min').value,skin:+document.getElementById('sc-skin').value};
+      const total=Object.values(sc).reduce((a,b)=>a+b,0);
+      const btn=document.getElementById('sc-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Scoring…';
+      document.getElementById('sc-out').style.display='block';document.getElementById('sc-ai').innerHTML='<span class="spinner"></span>';
+      const arc=document.getElementById('sc-arc');arc.style.strokeDashoffset=188.5-(total/100)*188.5;
+      const col=total>=75?'var(--green-text)':total>=50?'var(--amber)':'var(--red)';
+      arc.style.stroke=col;document.getElementById('sc-num').style.color=col;
+      document.getElementById('sc-num').textContent=total;
+      document.getElementById('sc-verdict').textContent=total>=80?'Excellent management':total>=65?'Good management':total>=50?'Average management':total>=35?'Below average':'Poor management';
+      document.getElementById('sc-sub').textContent=total+'/100 — '+co+(document.getElementById('sc-pr').value?' · '+document.getElementById('sc-pr').value:'');
+      try{
+        await callClaude([{role:'user',content:`Scorecard for ${co}: Total ${total}/100. ROIC ${sc.roic}/10, FCF ${sc.fcf}/10, Capex ${sc.capex}/10, Div ${sc.div}/5, Acq ${sc.acq}/5, Pledge ${sc.pledge}/10, RPT ${sc.rpt}/10, Guidance ${sc.guid}/8, Auditor ${sc.aud}/7, Concall ${sc.cc}/8, Minority ${sc.min}/9, Skin ${sc.skin}/8. Context: ${document.getElementById('sc-ctx').value||'None'}`}],
+          'Sharp Indian equity analyst. ## Verdict | ## Key strengths | ## Key concerns | ## Watch list. Use 🟢🟡🔴. Direct, specific, reference actual scores.',
+          t=>{document.getElementById('sc-ai').innerHTML=md(t);}
+        );
+      }catch(e){document.getElementById('sc-ai').textContent='Error: '+e.message;}
+      btn.disabled=false;btn.textContent='Generate scorecard';
+    }
 
-// ─── BULK UPLOAD ──────────────────────────────────────────────────────────────
-function autoDetectBroker(filename, data){
-  const fn = filename.toLowerCase();
-  if(fn.includes('tradebook') || fn.includes('zerodha')) return 'zerodha';
-  if(fn.includes('hdfcsec') || fn.includes('hdfc') || fn.includes('tradebook')) return 'hdfcsec';
-  if(fn.includes('icici') || fn.includes('orderlog')) return 'icicisec';
-  // Try content detection
-  const flat = data.slice(0,15).map(r=>r.join(' ')).join(' ').toLowerCase();
-  if(flat.includes('trade type') || flat.includes('wr') || flat.includes('zerodha')) return 'zerodha';
-  if(flat.includes('action') && flat.includes('settlement')) return 'hdfcsec';
-  if(flat.includes('orderlog') || flat.includes('order qty') || flat.includes('execution qty')) return 'icicisec';
-  return 'other';
-}
+    // ─── CONCALL ──────────────────────────────────────────────────────────────────
+    function handleCCFile(input){
+      const f=input.files[0];if(!f)return;
+      const zone=document.getElementById('cc-zone');
+      document.getElementById('cc-lbl').textContent=f.name;
+      zone.style.borderColor='var(--green)';zone.style.background='var(--green-dim)';
+      const r=new FileReader();r.onload=e=>{ccFileData={data:e.target.result.split(',')[1]};};r.readAsDataURL(f);
+    }
+    function clearConcall(){
+      ccFileData=null;
+      document.getElementById('cc-lbl').textContent='Click to upload PDF';
+      const zone=document.getElementById('cc-zone');zone.style.borderColor='';zone.style.background='';
+      ['cc-co','cc-q','cc-prev'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('cc-out').style.display='none';
+      document.getElementById('cc-file').value='';
+    }
+    async function runConcall(){
+      if(!ccFileData){alert('Upload a PDF transcript first');return;}
+      const co=document.getElementById('cc-co').value.trim();
+      const btn=document.getElementById('cc-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Analysing…';
+      document.getElementById('cc-out').style.display='block';document.getElementById('cc-ai').innerHTML='<span class="spinner"></span>';
+      const prev=document.getElementById('cc-prev').value.trim();const q=document.getElementById('cc-q').value.trim();
+      try{
+        await callClaude([{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:ccFileData.data}},{type:'text',text:`Analyse concall for ${co||'company'}${q?' ('+q+')':''}.${prev?'\n\nPrev guidance:\n'+prev:''}\n\n## Key guidance | ## Guidance vs previous | ## Red flags 🔴 | ## Positive signals 🟢 | ## Watch items 🟡 | ## Notable Q&A | ## Verdict`}]}],
+          'Sharp Indian equity analyst. Quote actual transcript lines. Spot what management avoids. Be specific and direct.',
+          t=>{document.getElementById('cc-ai').innerHTML=md(t);}
+        );
+      }catch(e){document.getElementById('cc-ai').textContent='Error: '+e.message;}
+      btn.disabled=false;btn.textContent='Analyse transcript';
+    }
 
-function updateBulkFamilyDropdown(){
-  const sel = document.getElementById('bulk-family');
-  if(!sel) return;
-  sel.innerHTML = '<option value="">— assign to family —</option>' +
-    families.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
-}
+    // ─── REPORT ───────────────────────────────────────────────────────────────────
+    function clearReport(){['rp-co','rp-notes','rp-cmp','rp-tgt','rp-risks'].forEach(id=>document.getElementById(id).value='');document.getElementById('rp-out').style.display='none';rpFiles=[];renderRpFileList();}
+    async function runReport(){
+      const co=document.getElementById('rp-co').value.trim();
+      const notes=document.getElementById('rp-notes').value.trim();
+      if(!co&&!rpFiles.length){alert('Enter a company name');return;}
+      if(!co){alert('Enter a company name');return;}
+      if(!notes&&!rpFiles.length){alert('Add some notes or upload source documents');return;}
 
-async function handleBulkUpload(input){
-  const files = [...input.files];
-  if(!files.length) return;
-  const familyName = document.getElementById('bulk-family').value;
-  if(!familyName){ alert('Please select a family to assign these accounts to'); input.value=''; return; }
-  const fi = families.findIndex(f=>f.name===familyName);
-  if(fi<0) return;
+      const cmp=document.getElementById('rp-cmp').value;const tgt=document.getElementById('rp-tgt').value;
+      const view=document.getElementById('rp-view').value;const type=document.getElementById('rp-type').value;
+      const risks=document.getElementById('rp-risks').value.trim();
+      const upside=cmp&&tgt?((tgt-cmp)/cmp*100).toFixed(1)+'%':'';
+      const btn=document.getElementById('rp-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Building…';
+      document.getElementById('rp-out').style.display='block';
+      document.getElementById('rp-full').innerHTML='<span class="spinner"></span>';
+      document.getElementById('rp-social').innerHTML='<span style="color:var(--text3)">Waiting for report…</span>';
 
-  const log = document.getElementById('bulk-log');
-  log.style.display='block';
-  log.innerHTML = '';
+      const instruction = `Write a ${type} research note for ${co}.
+    ${notes?'Analyst notes: '+notes:''}
+    CMP: ₹${cmp||'?'}, Target: ₹${tgt||'?'}${upside?', Upside: '+upside:''}, View: ${view}.
+    ${risks?'Risks: '+risks:''}
+    ${rpFiles.length?'Source documents are attached — extract key data, financials, and insights from them.':''}
+    Structure: ## ${co} — ${type} | ## Investment thesis | ## Business quality & moat | ## Key financials | ## Valuation | ## Risks | ## Conclusion`;
 
-  for(const file of files){
-    try{
-      const wb = await new Promise((res,rej)=>{
-        const r=new FileReader();
-        r.onload=e=>{try{res(XLSX.read(e.target.result,{type:'array'}));}catch(err){rej(err);}};
-        r.onerror=rej; r.readAsArrayBuffer(file);
-      });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws,{header:1,raw:false});
-      const broker = autoDetectBroker(file.name, data);
-      const acctName = file.name.replace(/\.[^.]+$/,'');
-
-      // Check not duplicate
-      const exists = families[fi].accounts.find(a=>a.fileName===file.name);
-      if(exists){
-        log.innerHTML += `<div style="font-size:12px;color:var(--amber);padding:3px 0">⚠ ${file.name} — already uploaded, skipped</div>`;
-        continue;
+      // Build message content — attach PDFs, inline text files
+      const content = [];
+      for(const f of rpFiles){
+        if(f.fileType==='pdf'){
+          content.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:f.data},title:f.name});
+        } else if(f.data){
+          content.push({type:'text',text:`--- ${f.name} ---
+    ${f.data}
+    ---`});
+        }
       }
+      content.push({type:'text',text:instruction});
 
-      families[fi].accounts.push({name:acctName, broker, clientId:'', file, fileName:file.name});
-      log.innerHTML += `<div style="font-size:12px;color:var(--green-text);padding:3px 0">✓ ${file.name} — detected as <strong>${BROKERS[broker]||broker}</strong></div>`;
-    } catch(e){
-      log.innerHTML += `<div style="font-size:12px;color:var(--red);padding:3px 0">✕ ${file.name} — could not read file</div>`;
+      try{
+        await callClaude([{role:'user',content:content.length===1?instruction:content}],
+          'Sharp Indian equity analyst. Direct, data-driven, no filler. Extract actual data from uploaded documents — specific numbers, management quotes, key metrics. Write like the best Indian investing blogs. Use ₹. Confident and specific.',
+          t=>{document.getElementById('rp-full').innerHTML=md(t);}
+        );
+        document.getElementById('rp-social').innerHTML='<span class="spinner"></span> Writing snippets…';
+        const rep=document.getElementById('rp-full').innerText.slice(0,2000);
+        await callClaude([{role:'user',content:`From this note on ${co}:\n\n${rep}\n\nWrite:\n1. Twitter/X opener (max 280 chars, punchy, no hashtags)\n2. LinkedIn post (3-4 paras, end with question)\n3. Short take (2-3 sentences, plain language)\n\nDirect voice. Sound like a smart investor, not marketing.`}],
+          'Sharp investing content writer for Indian equity investor blog.',
+          t=>{document.getElementById('rp-social').innerHTML=md(t);}
+        );
+      }catch(e){document.getElementById('rp-full').textContent='Error: '+e.message;}
+      btn.disabled=false;btn.textContent='Build report';
     }
-  }
-  saveState(); renderFamilies(); updateBulkFamilyDropdown();
-  input.value='';
-}
 
-// ─── REPORT FILES ─────────────────────────────────────────────────────────────
-let rpFiles = []; // [{name, type, data (base64 for pdf, text for others)}]
-
-function handleRpDrop(e){
-  e.preventDefault();
-  document.getElementById('rp-drop-zone').style.borderColor='';
-  handleRpFiles(e.dataTransfer.files);
-}
-
-async function handleRpFiles(fileList){
-  const files = [...fileList];
-  for(const file of files){
-    if(rpFiles.find(f=>f.name===file.name)) continue; // skip dup
-    const entry = {name:file.name, size:file.size, fileType: file.name.endsWith('.pdf')?'pdf':'text'};
-    if(file.name.endsWith('.pdf')){
-      entry.data = await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.readAsDataURL(file);});
-    } else {
-      // Excel/CSV — read as text/sheet
-      entry.data = await new Promise(res=>{
-        const r=new FileReader();
-        r.onload=e=>{
-          try{
-            const wb=XLSX.read(e.target.result,{type:'array'});
-            const ws=wb.Sheets[wb.SheetNames[0]];
-            const txt=XLSX.utils.sheet_to_csv(ws);
-            res(txt.slice(0,8000));
-          }catch(err){res('');}
-        };
-        r.readAsArrayBuffer(file);
-      });
-      entry.fileType='text';
+    // ─── BULK UPLOAD ──────────────────────────────────────────────────────────────
+    function autoDetectBroker(filename, data){
+      const fn = filename.toLowerCase();
+      if(fn.includes('tradebook') || fn.includes('zerodha')) return 'zerodha';
+      if(fn.includes('hdfcsec') || fn.includes('hdfc') || fn.includes('tradebook')) return 'hdfcsec';
+      if(fn.includes('icici') || fn.includes('orderlog')) return 'icicisec';
+      // Try content detection
+      const flat = data.slice(0,15).map(r=>r.join(' ')).join(' ').toLowerCase();
+      if(flat.includes('trade type') || flat.includes('wr') || flat.includes('zerodha')) return 'zerodha';
+      if(flat.includes('action') && flat.includes('settlement')) return 'hdfcsec';
+      if(flat.includes('orderlog') || flat.includes('order qty') || flat.includes('execution qty')) return 'icicisec';
+      return 'other';
     }
-    rpFiles.push(entry);
-  }
-  renderRpFileList();
-}
 
-function renderRpFileList(){
-  const el = document.getElementById('rp-file-list');
-  if(!rpFiles.length){el.innerHTML='';return;}
-  el.innerHTML = rpFiles.map((f,i)=>`
-    <div style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:11px;color:var(--text2)">
-      <span>${f.fileType==='pdf'?'📄':'📊'}</span>
-      <span>${f.name.length>28?f.name.slice(0,25)+'...':f.name}</span>
-      <button onclick="rpFiles.splice(${i},1);renderRpFileList()" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:0;font-size:13px;line-height:1;margin-left:2px">✕</button>
-    </div>`).join('');
-}
+    function updateBulkFamilyDropdown(){
+      const sel = document.getElementById('bulk-family');
+      if(!sel) return;
+      sel.innerHTML = '<option value="">— assign to family —</option>' +
+        families.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
+    }
 
-// ─── API KEY ──────────────────────────────────────────────────────────────────
-function saveApiKey(val){
-  const trimmed = val.trim();
-  if(trimmed){
-    localStorage.setItem('inv_api_key', trimmed);
-    document.getElementById('api-status').textContent = 'Saved';
-    document.getElementById('api-status').style.color = 'var(--green-text)';
-  } else {
-    localStorage.removeItem('inv_api_key');
-    document.getElementById('api-status').textContent = 'Not set';
-    document.getElementById('api-status').style.color = 'var(--text3)';
-  }
-}
-function toggleApiKeyVisibility(){
-  const inp = document.getElementById('api-key-input');
-  const eye = document.getElementById('api-eye');
-  if(inp.type==='password'){inp.type='text';eye.textContent='🙈';}
-  else{inp.type='password';eye.textContent='👁';}
-}
-function initApiKey(){
-  const saved = localStorage.getItem('inv_api_key');
-  if(saved){
-    document.getElementById('api-key-input').value = saved;
-    document.getElementById('api-status').textContent = 'Key saved ✓';
-    document.getElementById('api-status').style.color = 'var(--green-text)';
-  }
-}
+    async function handleBulkUpload(input){
+      const files = [...input.files];
+      if(!files.length) return;
+      const familyName = document.getElementById('bulk-family').value;
+      if(!familyName){ alert('Please select a family to assign these accounts to'); input.value=''; return; }
+      const fi = families.findIndex(f=>f.name===familyName);
+      if(fi<0) return;
 
-// ─── Init ──────────────────────────────────────────────────────────────────────
-renderFamilies();
-updateFamilyNav();
-updateBulkFamilyDropdown();
-initApiKey();
-</script>
+      const log = document.getElementById('bulk-log');
+      log.style.display='block';
+      log.innerHTML = '';
+
+      for(const file of files){
+        try{
+          const wb = await new Promise((res,rej)=>{
+            const r=new FileReader();
+            r.onload=e=>{try{res(XLSX.read(e.target.result,{type:'array'}));}catch(err){rej(err);}};
+            r.onerror=rej; r.readAsArrayBuffer(file);
+          });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const data = XLSX.utils.sheet_to_json(ws,{header:1,raw:false});
+          const broker = autoDetectBroker(file.name, data);
+          const acctName = file.name.replace(/\.[^.]+$/,'');
+
+          // Check not duplicate
+          const exists = families[fi].accounts.find(a=>a.fileName===file.name);
+          if(exists){
+            log.innerHTML += `<div style="font-size:12px;color:var(--amber);padding:3px 0">⚠ ${file.name} — already uploaded, skipped</div>`;
+            continue;
+          }
+
+          families[fi].accounts.push({name:acctName, broker, clientId:'', file, fileName:file.name});
+          log.innerHTML += `<div style="font-size:12px;color:var(--green-text);padding:3px 0">✓ ${file.name} — detected as <strong>${BROKERS[broker]||broker}</strong></div>`;
+        } catch(e){
+          log.innerHTML += `<div style="font-size:12px;color:var(--red);padding:3px 0">✕ ${file.name} — could not read file</div>`;
+        }
+      }
+      saveState(); renderFamilies(); updateBulkFamilyDropdown();
+      input.value='';
+    }
+
+    // ─── REPORT FILES ─────────────────────────────────────────────────────────────
+    let rpFiles = []; // [{name, type, data (base64 for pdf, text for others)}]
+
+    function handleRpDrop(e){
+      e.preventDefault();
+      document.getElementById('rp-drop-zone').style.borderColor='';
+      handleRpFiles(e.dataTransfer.files);
+    }
+
+    async function handleRpFiles(fileList){
+      const files = [...fileList];
+      for(const file of files){
+        if(rpFiles.find(f=>f.name===file.name)) continue; // skip dup
+        const entry = {name:file.name, size:file.size, fileType: file.name.endsWith('.pdf')?'pdf':'text'};
+        if(file.name.endsWith('.pdf')){
+          entry.data = await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.readAsDataURL(file);});
+        } else {
+          // Excel/CSV — read as text/sheet
+          entry.data = await new Promise(res=>{
+            const r=new FileReader();
+            r.onload=e=>{
+              try{
+                const wb=XLSX.read(e.target.result,{type:'array'});
+                const ws=wb.Sheets[wb.SheetNames[0]];
+                const txt=XLSX.utils.sheet_to_csv(ws);
+                res(txt.slice(0,8000));
+              }catch(err){res('');}
+            };
+            r.readAsArrayBuffer(file);
+          });
+          entry.fileType='text';
+        }
+        rpFiles.push(entry);
+      }
+      renderRpFileList();
+    }
+
+    function renderRpFileList(){
+      const el = document.getElementById('rp-file-list');
+      if(!rpFiles.length){el.innerHTML='';return;}
+      el.innerHTML = rpFiles.map((f,i)=>`
+        <div style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:11px;color:var(--text2)">
+          <span>${f.fileType==='pdf'?'📄':'📊'}</span>
+          <span>${f.name.length>28?f.name.slice(0,25)+'...':f.name}</span>
+          <button onclick="rpFiles.splice(${i},1);renderRpFileList()" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:0;font-size:13px;line-height:1;margin-left:2px">✕</button>
+        </div>`).join('');
+    }
+
+    // ─── API KEY ──────────────────────────────────────────────────────────────────
+    function saveApiKey(val){
+      const trimmed = val.trim();
+      if(trimmed){
+        localStorage.setItem('inv_api_key', trimmed);
+        document.getElementById('api-status').textContent = 'Saved';
+        document.getElementById('api-status').style.color = 'var(--green-text)';
+      } else {
+        localStorage.removeItem('inv_api_key');
+        document.getElementById('api-status').textContent = 'Not set';
+        document.getElementById('api-status').style.color = 'var(--text3)';
+      }
+    }
+    function toggleApiKeyVisibility(){
+      const inp = document.getElementById('api-key-input');
+      const eye = document.getElementById('api-eye');
+      if(inp.type==='password'){inp.type='text';eye.textContent='🙈';}
+      else{inp.type='password';eye.textContent='👁';}
+    }
+    function initApiKey(){
+      const saved = localStorage.getItem('inv_api_key');
+      if(saved){
+        document.getElementById('api-key-input').value = saved;
+        document.getElementById('api-status').textContent = 'Key saved ✓';
+        document.getElementById('api-status').style.color = 'var(--green-text)';
+      }
+    }
+
+    // ─── Init ──────────────────────────────────────────────────────────────────────
+    renderFamilies();
+    updateFamilyNav();
+    updateBulkFamilyDropdown();
+    initApiKey();
+    </script>
 </body>
 </html>
