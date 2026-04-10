@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PrimeAsset Source — Vendor Tool</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f7f8f6; --bg3: #f0f1ef;
+    --text: #1a1a1a; --text2: #5a5a5a; --text3: #909090;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.2);
+    --green: #1D9E75; --green-dark: #0F6E56; --green-light: #e8f7f2;
+    --danger: #c0392b; --danger-bg: #fff0ef;
+    --info-bg: #e8f3ff; --info: #1a6bbf;
+    --radius: 10px; --radius-sm: 6px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e; --bg2: #2c2c2e; --bg3: #3a3a3c;
+      --text: #f2f2f7; --text2: #aeaeb2; --text3: #636366;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --green-light: #0d3d2e; --info-bg: #0d2847; --info: #5ac8fa;
+      --danger-bg: #3a1515;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  .topbar { background: var(--bg); border-bottom: 1px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 50; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 32px; height: 32px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 18px; height: 18px; fill: #fff; }
+  .logo-text { font-size: 15px; font-weight: 600; color: var(--text); }
+  .logo-sub { font-size: 11px; color: var(--text3); }
+  .sync-pill { display: flex; align-items: center; gap: 7px; padding: 5px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .sync-pill:hover { border-color: var(--green); color: var(--green); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+  .dot.green { background: var(--green); }
+  .dot.red { background: var(--danger); }
+  .dot.spin { background: #f0a500; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem; }
+  .tabs { display: flex; gap: 2px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; margin-bottom: 1.5rem; }
+  .tab { flex: 1; padding: 8px 12px; font-size: 13px; font-weight: 500; text-align: center; cursor: pointer; border: none; background: none; color: var(--text2); border-radius: var(--radius-sm); transition: all 0.15s; }
+  .tab.active { background: var(--bg); color: var(--text); box-shadow: var(--shadow); }
+  .section { display: none; }
+  .section.active { display: block; }
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+  label { font-size: 12px; font-weight: 500; color: var(--text2); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  select, textarea, input[type="text"] { width: 100%; font-family: inherit; font-size: 14px; padding: 9px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg2); color: var(--text); outline: none; transition: border-color 0.15s; }
+  select:focus, textarea:focus, input[type="text"]:focus { border-color: var(--green); }
+  textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+  @media(max-width:540px) { .row2 { grid-template-columns: 1fr; } }
+  .mb1 { margin-bottom: 1rem; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; font-size: 14px; font-weight: 500; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; border: 1px solid var(--border2); background: var(--bg); color: var(--text); font-family: inherit; }
+  .btn:hover { background: var(--bg2); }
+  .btn:active { transform: scale(0.98); }
+  .btn-green { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn-green:hover { background: var(--green-dark); border-color: var(--green-dark); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-danger { color: var(--danger); border-color: rgba(192,57,43,0.3); }
+  .btn-danger:hover { background: var(--danger-bg); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .stat { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+  .stat-n { font-size: 26px; font-weight: 600; color: var(--text); }
+  .stat-l { font-size: 11px; color: var(--text3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .vendor-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 7px; gap: 12px; }
+  .vendor-info { flex: 1; min-width: 0; }
+  .vendor-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vendor-phone { font-size: 12px; color: var(--text3); margin-top: 2px; font-family: monospace; }
+  .wa-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #25D366; color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; text-decoration: none; cursor: pointer; white-space: nowrap; transition: background 0.15s; flex-shrink: 0; }
+  .wa-btn:hover { background: #1aad52; }
+  .wa-btn svg { width: 15px; height: 15px; fill: #fff; flex-shrink: 0; }
+  .empty { text-align: center; padding: 2.5rem 1rem; color: var(--text3); font-size: 14px; }
+  .empty strong { display: block; font-size: 16px; margin-bottom: 6px; color: var(--text2); }
+  .tbl-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); background: var(--bg2); }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--bg2); }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; background: var(--info-bg); color: var(--info); margin: 2px; }
+  .search { width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-family: inherit; outline: none; margin-bottom: 1rem; }
+  .search:focus { border-color: var(--green); }
+  .results-hdr { font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--bg); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 420px; border: 1px solid var(--border); }
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 1.25rem; }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+  .checks { display: flex; flex-wrap: wrap; gap: 8px; }
+  .checks label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text); cursor: pointer; padding: 6px 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg2); text-transform: none; letter-spacing: 0; font-weight: 400; }
+  .checks input { width: auto; margin: 0; }
+  .tip { font-size: 12px; color: var(--text3); background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; line-height: 1.6; margin-bottom: 1rem; }
+  .tip code { font-family: monospace; font-size: 11px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; }
+  .step { display: flex; gap: 12px; margin-bottom: 1rem; align-items: flex-start; }
+  .step-n { width: 26px; height: 26px; border-radius: 50%; background: var(--green); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .step-body { font-size: 13px; color: var(--text2); line-height: 1.7; }
+  .step-body strong { color: var(--text); font-weight: 600; }
+  .step-body code { font-family: monospace; font-size: 11px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; }
+  .section-title { font-size: 16px; font-weight: 600; margin-bottom: 0.75rem; }
+  .send-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .cnt { font-size: 13px; color: var(--text3); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zm-9 9H7v-2h4v2zm6 0h-4v-2h4v2zm0-4H7v-2h10v2z"/></svg>
+    </div>
+    <div>
+      <div class="logo-text">PrimeAsset Source</div>
+      <div class="logo-sub">Vendor outreach tool</div>
+    </div>
+  </div>
+  <div class="sync-pill" onclick="syncNow()">
+    <span class="dot" id="sync-dot"></span>
+    <span id="sync-label">Sync sheet</span>
+    <span id="sync-time" style="color:var(--text3);"></span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('send',this)">Send requirement</button>
+    <button class="tab" onclick="switchTab('vendors',this)">View vendors</button>
+    <button class="tab" onclick="switchTab('settings',this)">Settings</button>
+  </div>
+
+  <!-- SEND -->
+  <div id="tab-send" class="section active">
+    <div class="stats" id="stats"></div>
+    <div class="card">
+      <div class="row2">
+        <div class="mb1">
+          <label>Vendor group</label>
+          <select id="sel-group" onchange="renderLinks()">
+            <option value="">— select group —</option>
+            <option value="apple">Apple vendors</option>
+            <option value="lenovo">Lenovo vendors</option>
+            <option value="hp">HP vendors</option>
+            <option value="dell">Dell vendors</option>
+            <option value="lenovo_hp_dell">Lenovo, HP &amp; Dell vendors</option>
+            <option value="printer">Printer vendors</option>
+            <option value="used">Used laptop vendors</option>
+            <option value="spares">Spare parts vendors</option>
+          </select>
+        </div>
+      </div>
+      <div class="mb1">
+        <label>Requirement message</label>
+        <textarea id="msg-text" placeholder="Type your requirement here… e.g. Need 10 units MacBook Pro M3 14&quot; — 16GB RAM, 512GB SSD for 6 month rental. Share availability and best pricing." oninput="renderLinks()"></textarea>
+      </div>
+    </div>
+    <div id="links-out"></div>
+  </div>
+
+  <!-- VENDORS -->
+  <div id="tab-vendors" class="section">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:1rem;">
+      <input class="search" style="margin-bottom:0;flex:1;" type="text" id="search" placeholder="Search by name, phone or group…" oninput="renderTable()">
+      <button class="btn btn-green" onclick="openAdd()">+ Add vendor</button>
+    </div>
+    <div id="tbl"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tab-settings" class="section">
+    <div class="card">
+      <div class="section-title">Google Sheet connection</div>
+      <div class="tip">
+        Your sheet must have these column headers in row 1: <code>Name</code> &nbsp;<code>Phone</code> &nbsp;<code>Groups</code><br>
+        Phone = country code + number, no + sign &nbsp;(e.g. <code>919876543210</code>)<br>
+        Groups = comma-separated keys &nbsp;(e.g. <code>apple,lenovo</code>)<br>
+        Valid keys: <code>apple</code> <code>lenovo</code> <code>hp</code> <code>dell</code> <code>lenovo_hp_dell</code> <code>printer</code> <code>used</code> <code>spares</code>
+      </div>
+      <div class="step"><div class="step-n">1</div><div class="step-body">Open your Google Sheet → click <strong>Share</strong> → <strong>Anyone with the link</strong> → <strong>Viewer</strong> → Done</div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-body">Copy the sheet URL and paste it below</div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-body">Click <strong>Save &amp; sync</strong> — vendors load instantly</div></div>
+      <div class="mb1">
+        <label>Google Sheet URL</label>
+        <input type="text" id="sheet-url" placeholder="https://docs.google.com/spreadsheets/d/…">
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-green" onclick="saveAndSync()">Save &amp; sync</button>
+        <span id="settings-msg" style="font-size:13px;color:var(--text3);"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">Add vendor</h3>
+    <div class="mb1"><label>Vendor name</label><input type="text" id="v-name" placeholder="e.g. Raj Computers"></div>
+    <div class="mb1"><label>WhatsApp number (91XXXXXXXXXX)</label><input type="text" id="v-phone" placeholder="e.g. 919876543210"></div>
+    <div class="mb1"><label>Groups — select all that apply</label><div class="checks" id="grp-checks"></div></div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" onclick="saveVendor()">Save vendor</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GROUPS = {
+  apple:'Apple vendors', lenovo:'Lenovo vendors', hp:'HP vendors', dell:'Dell vendors',
+  lenovo_hp_dell:'Lenovo, HP & Dell', printer:'Printer vendors', used:'Used laptop vendors', spares:'Spare parts vendors'
+};
+const WA_ICON = `<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.553 4.103 1.523 5.824L.057 23.979l6.307-1.434A11.935 11.935 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.787 9.787 0 01-5.019-1.381l-.36-.214-3.742.851.882-3.632-.235-.373A9.772 9.772 0 012.182 12C2.182 6.573 6.573 2.182 12 2.182c5.426 0 9.818 4.391 9.818 9.818 0 5.426-4.392 9.818-9.818 9.818z"/></svg>`;
+
+let vendors = JSON.parse(localStorage.getItem('pas_v')||'[]');
+let sheetUrl = localStorage.getItem('pas_url')||'';
+let lastSync = localStorage.getItem('pas_sync')||'';
+let editIdx = -1;
+
+function save(){ localStorage.setItem('pas_v', JSON.stringify(vendors)); }
+function extractId(url){ const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/); return m?m[1]:null; }
+
+function setDot(s){ const d=document.getElementById('sync-dot'); d.className='dot '+(s==='ok'?'green':s==='err'?'red':s==='spin'?'spin':''); }
+function setSyncLabel(t,s){ setDot(s); document.getElementById('sync-label').textContent=t; }
+
+async function syncNow(){
+  if(!sheetUrl){ switchTab('settings',document.querySelectorAll('.tab')[2]); return; }
+  const id=extractId(sheetUrl);
+  if(!id){ setSyncLabel('Invalid URL','err'); return; }
+  setSyncLabel('Syncing…','spin');
+  try {
+    const res = await fetch(`https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=0`);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    const rows = text.trim().split('\n').map(r=>{
+      const cols=[]; let cur='', inQ=false;
+      for(let i=0;i<r.length;i++){
+        if(r[i]==='"'){ inQ=!inQ; }
+        else if(r[i]===','&&!inQ){ cols.push(cur.trim()); cur=''; }
+        else cur+=r[i];
+      }
+      cols.push(cur.trim()); return cols;
+    });
+    if(rows.length<2) throw new Error('Sheet appears empty');
+    const hdr=rows[0].map(h=>h.toLowerCase().replace(/[^a-z]/g,''));
+    const ni=hdr.findIndex(h=>h.includes('name'));
+    const pi=hdr.findIndex(h=>h.includes('phone'));
+    const gi=hdr.findIndex(h=>h.includes('group'));
+    if(ni<0||pi<0) throw new Error('Cannot find Name or Phone columns');
+    const parsed=[];
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];
+      const name=(r[ni]||'').trim();
+      const phone=(r[pi]||'').trim().replace(/\D/g,'');
+      const grpRaw=gi>=0?(r[gi]||''):'';
+      const groups=grpRaw.split(',').map(g=>g.trim()).filter(g=>GROUPS[g]);
+      if(name&&phone) parsed.push({name,phone,groups});
+    }
+    if(!parsed.length) throw new Error('No valid rows found');
+    vendors=parsed; save();
+    const now=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    lastSync=now; localStorage.setItem('pas_sync',now);
+    setSyncLabel(`${vendors.length} vendors synced`,'ok');
+    document.getElementById('sync-time').textContent=' · '+now;
+    renderStats(); renderLinks();
+    if(document.getElementById('tab-vendors').classList.contains('active')) renderTable();
+  } catch(e){
+    setSyncLabel('Sync failed: '+e.message,'err');
+  }
+}
+
+function saveAndSync(){
+  const u=document.getElementById('sheet-url').value.trim();
+  if(!u) return;
+  sheetUrl=u; localStorage.setItem('pas_url',u);
+  document.getElementById('settings-msg').textContent='URL saved.';
+  syncNow();
+}
+
+function switchTab(t,el){
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='vendors') renderTable();
+  if(t==='send') renderStats();
+  if(t==='settings'&&sheetUrl) document.getElementById('sheet-url').value=sheetUrl;
+}
+
+function renderStats(){
+  const g=document.getElementById('sel-group')?.value;
+  const inG=g?vendors.filter(v=>v.groups.includes(g)).length:'—';
+  const activeG=new Set(vendors.flatMap(v=>v.groups)).size;
+  document.getElementById('stats').innerHTML=
+    `<div class="stat"><div class="stat-n">${vendors.length}</div><div class="stat-l">Total vendors</div></div>
+     <div class="stat"><div class="stat-n">${activeG}</div><div class="stat-l">Active groups</div></div>
+     <div class="stat"><div class="stat-n">${inG}</div><div class="stat-l">In selected group</div></div>`;
+}
+
+function renderLinks(){
+  renderStats();
+  const group=document.getElementById('sel-group').value;
+  const msg=document.getElementById('msg-text').value.trim();
+  const out=document.getElementById('links-out');
+  if(!group){ out.innerHTML=''; return; }
+  const matched=vendors.filter(v=>v.groups.includes(group));
+  if(!matched.length){
+    out.innerHTML=`<div class="empty"><strong>No vendors in this group</strong>Add vendors to your Google Sheet and sync again.</div>`;
+    return;
+  }
+  const enc=encodeURIComponent(msg);
+  out.innerHTML=`<div class="send-hdr"><span class="cnt">${matched.length} vendor${matched.length!==1?'s':''} — click each to open WhatsApp</span></div>`+
+    matched.map(v=>`
+      <div class="vendor-row">
+        <div class="vendor-info">
+          <div class="vendor-name">${v.name}</div>
+          <div class="vendor-phone">${v.phone}</div>
+        </div>
+        <a class="wa-btn" href="https://wa.me/${v.phone}${enc?'?text='+enc:''}" target="_blank" rel="noopener">
+          ${WA_ICON} Open WhatsApp
+        </a>
+      </div>`).join('');
+}
+
+function renderTable(){
+  const q=(document.getElementById('search')?.value||'').toLowerCase();
+  const f=vendors.filter(v=>v.name.toLowerCase().includes(q)||v.phone.includes(q)||v.groups.some(g=>GROUPS[g]?.toLowerCase().includes(q)));
+  const wrap=document.getElementById('tbl');
+  if(!vendors.length){ wrap.innerHTML=`<div class="empty"><strong>No vendors loaded</strong>Go to Settings to connect your Google Sheet.</div>`; return; }
+  if(!f.length){ wrap.innerHTML=`<div class="empty">No vendors match your search.</div>`; return; }
+  wrap.innerHTML=`<div class="results-hdr">${f.length} vendor${f.length!==1?'s':''}</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Name</th><th>Phone</th><th>Groups</th><th style="text-align:right;">Actions</th></tr></thead>
+    <tbody>${f.map(v=>{
+      const ri=vendors.indexOf(v);
+      return `<tr>
+        <td style="font-weight:500;">${v.name}</td>
+        <td style="font-family:monospace;font-size:12px;">${v.phone}</td>
+        <td style="white-space:normal;">${v.groups.map(g=>`<span class="tag">${GROUPS[g]||g}</span>`).join('')}</td>
+        <td style="text-align:right;white-space:nowrap;">
+          <button class="btn btn-sm" onclick="openEdit(${ri})">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="delVendor(${ri})">Delete</button>
+        </td></tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function buildChecks(sel){
+  document.getElementById('grp-checks').innerHTML=Object.entries(GROUPS).map(([k,v])=>
+    `<label><input type="checkbox" value="${k}" ${sel.includes(k)?'checked':''}> ${v}</label>`).join('');
+}
+function openAdd(){ editIdx=-1; document.getElementById('modal-title').textContent='Add vendor'; document.getElementById('v-name').value=''; document.getElementById('v-phone').value=''; buildChecks([]); document.getElementById('modal').classList.add('open'); }
+function openEdit(i){ editIdx=i; const v=vendors[i]; document.getElementById('modal-title').textContent='Edit vendor'; document.getElementById('v-name').value=v.name; document.getElementById('v-phone').value=v.phone; buildChecks(v.groups); document.getElementById('modal').classList.add('open'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+function saveVendor(){
+  const name=document.getElementById('v-name').value.trim();
+  const phone=document.getElementById('v-phone').value.trim().replace(/\D/g,'');
+  const groups=[...document.querySelectorAll('#grp-checks input:checked')].map(e=>e.value);
+  if(!name||!phone){ alert('Name and phone are required.'); return; }
+  if(!groups.length){ alert('Select at least one group.'); return; }
+  if(editIdx<0) vendors.push({name,phone,groups}); else vendors[editIdx]={name,phone,groups};
+  save(); closeModal(); renderTable(); renderStats();
+}
+function delVendor(i){ if(!confirm('Delete '+vendors[i].name+'?')) return; vendors.splice(i,1); save(); renderTable(); renderStats(); }
+
+// Init
+if(sheetUrl) document.getElementById('sheet-url').value=sheetUrl;
+if(lastSync&&vendors.length){ setSyncLabel(`${vendors.length} vendors loaded`,'ok'); document.getElementById('sync-time').textContent=' · '+lastSync; }
+renderStats();
+</script>
+</body>
+</html>
