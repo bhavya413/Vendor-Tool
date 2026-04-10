@@ -559,8 +559,8 @@ function renderHoldings(){
     var pnlPctHtml=h.ltp?fmtP(h.pnlPct):'--';
     var xirrHtml=h.xirr!=null?(h.xirr*100).toFixed(1)+'%':'--';
     var wbar='<div style="display:flex;align-items:center;gap:5px"><span class="mono">'+h.weight.toFixed(1)+'%</span><div class="wbar-bg"><div class="wbar" style="width:'+Math.min(h.weight*4,100)+'%"></div></div></div>';
-    return '<tr class="clickable" onclick="showTxns(\'' + h.stock + '\')">'+
-      '<td><strong>'+h.stock+'</strong></td>'+
+    return '<tr class="clickable">'+
+      '<td><strong onclick="showTxns(\''+h.stock+'\')" style="cursor:pointer">'+h.stock+'</strong> <button onclick="deleteStock(\''+h.stock+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:1px 4px;border-radius:3px;vertical-align:middle" title="Remove from portfolio">✕</button></td>'+
       '<td class="mono">'+h.qty.toFixed(0)+'</td>'+
       '<td class="mono">Rs'+h.avgCost.toFixed(1)+'</td>'+
       '<td>'+ltpHtml+'</td>'+
@@ -859,6 +859,14 @@ function saveAVKey(val){
 }
 
 // INIT
+function deleteStock(stock) {
+  if (!confirm('Remove ' + stock + ' from portfolio? This only hides it — rebuild portfolio to restore.')) return;
+  holdings = holdings.filter(function(h) { return h.stock !== stock; });
+  renderHoldings();
+  renderStats();
+  updateFamilyNav();
+}
+
 function init(){
   var saved=localStorage.getItem('inv_api_key');
   if(saved){document.getElementById('api-key-input').value=saved;document.getElementById('api-status').textContent='Saved';document.getElementById('api-status').style.color='var(--gtxt)';}
