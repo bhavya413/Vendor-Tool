@@ -721,11 +721,11 @@ async function buildAll(){
   const btn=document.getElementById('build-btn');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Building…';
   const allTxns=[];
+  const debugLines=[];
   for(const acct of withFiles){
     const filesToProcess = acct.files && acct.files.length ? acct.files : [acct.file];
     for(const file of filesToProcess){
       if(!file) continue;
-      // Auto-detect broker per file if account broker is 'other'
       let broker = acct.broker;
       if(broker==='other'){
         const fn=file.name.toLowerCase();
@@ -734,9 +734,14 @@ async function buildAll(){
         else if(fn.includes('icici')||fn.includes('orderlog')) broker='icicisec';
       }
       const txns=await readFile(file, broker);
+      const buys=txns.filter(t=>t.type==='BUY').length;
+      const sells=txns.filter(t=>t.type==='SELL').length;
+      debugLines.push(`${file.name}: ${txns.length} txns (B:${buys} S:${sells}) broker:${broker}`);
       txns.forEach(t=>allTxns.push({...t,family:acct.family,account:acct.name,broker}));
     }
   }
+  // Show debug in AI panel temporarily
+  document.getElementById('port-ai').innerHTML = '<strong>Debug — parsing results:</strong><br>' + debugLines.join('<br>') + '<br><br>Computing holdings...';
   const stockMap={};
   allTxns.forEach(t=>{
     if(!stockMap[t.stock])stockMap[t.stock]={stock:t.stock,txns:[],accounts:new Set()};
@@ -755,6 +760,11 @@ async function buildAll(){
     if(qty<0.001)return;
     builtHoldings.push({stock:s.stock,qty,avgCost:qty>0?totalCost/qty:0,invested:totalCost,families:[...new Set(s.txns.map(t=>t.family))],accounts:[...s.accounts],txns:sorted});
   });
+  // Debug: show holdings count
+  const debugInfo = document.getElementById('port-ai').innerHTML;
+  document.getElementById('port-ai').innerHTML = debugInfo + `<br>Holdings computed: ${builtHoldings.length} stocks<br>` +
+    builtHoldings.slice(0,10).map(h=>`  ${h.stock}: ${h.qty.toFixed(0)} shares @ ₹${h.avgCost.toFixed(1)}`).join('<br>');
+
   await refreshPrices();
   showPortfolio('all',document.getElementById('nav-all'));
   document.getElementById('port-ai').innerHTML='<span class="spinner"></span> Generating insights…';
