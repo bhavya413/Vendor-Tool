@@ -345,299 +345,91 @@ function portXIRR(list){
 
 // PRICES
 var AV_KEY = localStorage.getItem('av_key') || '';
-
-async function fetchPriceAV(sym) {
-  if (!AV_KEY) return null;
-  var s = norm(sym);
-  // Try BSE first (covers SME stocks too), then NSE
-  for (var vi = 0; vi < 2; vi++) {
-    var variant = (vi === 0 ? 'BSE:' : 'NSE:') + s;
-    try {
-      var r = await fetch('https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol='
-        + encodeURIComponent(variant) + '&apikey=' + AV_KEY, {signal: AbortSignal.timeout(15000)});
-      if (!r.ok) continue;
-      var j = await r.json();
-      if (j['Note'] || j['Information']) return 'LIMIT';
-      var q = j['Global Quote'];
-      if (q && q['05. price'] && parseFloat(q['05. price']) > 0) {
-        return {
-          price: parseFloat(q['05. price']),
-          change: parseFloat(q['09. change']) || 0,
-          changeP: parseFloat((q['10. change percent'] || '0').replace('%','')) || 0,
-          src: vi === 1 ? 'NSE' : 'BSE',
-          time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})
-        };
-      }
-    } catch(e) {}
-  }
-  return null;
-}
+var LOCAL = 'http://localhost:5001';
 
 async function fetchPrice(sym) {
-  return await fetchPriceAV(sym);
+  // Try local price server first
+  try {
+    var r = await fetch(LOCAL + '/prices', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({symbols: [norm(sym)]}),
+      signal: AbortSignal.timeout(10000)
+    });
+    if (r.ok) {
+      var j = await r.json();
+      var p = j.prices && j.prices[norm(sym)];
+      if (p && p.price) return p;
+    }
+  } catch(e) {}
+
+  // Alpha Vantage fallback
+  if (AV_KEY) {
+    var s = norm(sym);
+    for (var vi = 0; vi < 2; vi++) {
+      var variant = (vi === 0 ? 'BSE:' : 'NSE:') + s;
+      try {
+        var r2 = await fetch('https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol='
+          + encodeURIComponent(variant) + '&apikey=' + AV_KEY, {signal: AbortSignal.timeout(12000)});
+        if (!r2.ok) continue;
+        var j2 = await r2.json();
+        if (j2['Note'] || j2['Information']) continue;
+        var q = j2['Global Quote'];
+        if (q && q['05. price'] && parseFloat(q['05. price']) > 0) {
+          return {price: parseFloat(q['05. price']),
+            change: parseFloat(q['09. change']) || 0,
+            changeP: parseFloat((q['10. change percent'] || '0').replace('%','')) || 0,
+            src: vi === 1 ? 'NSE' : 'BSE',
+            time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})};
+        }
+      } catch(e) {}
+    }
+  }
+  return null;
 }
 async function refreshPrices(){
   var syms=[...new Set(holdings.map(function(h){return h.stock;}))];
   if(!syms.length)return;
-  if(!AV_KEY){
-    document.getElementById('price-status').textContent='Add Alpha Vantage key in sidebar';
-    return;
-  }
   var btn=document.getElementById('refresh-btn');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Fetching...';
-  var done=0; var got=0;
-  // Fetch sequentially with 13 second gap - AV free = 5 calls/min
+  document.getElementById('price-status').textContent='Checking local server...';
+
+  // Try batch from local server first
+  try {
+    var r = await fetch(LOCAL + '/prices', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({symbols: syms}),
+      signal: AbortSignal.timeout(30000)
+    });
+    if (r.ok) {
+      var j = await r.json();
+      if (j.count > 0) {
+        Object.entries(j.prices).forEach(function(e){prices[norm(e[0])]=e[1];});
+        var got = Object.keys(prices).length;
+        document.getElementById('price-status').textContent = got+'/'+syms.length+' prices via local server';
+        btn.disabled=false; btn.textContent='Refresh prices';
+        renderHoldings(); renderStats(); updateFamilyNav();
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Fallback: Alpha Vantage one by one
+  document.getElementById('price-status').textContent='Fetching via Alpha Vantage...';
+  var done=0;
   for (var i=0; i<syms.length; i++) {
-    document.getElementById('price-status').textContent='Fetching '+syms[i]+'... ('+( i+1)+'/'+syms.length+')';
-    var p = await fetchPriceAV(syms[i]);
-    if (p === 'LIMIT') {
-      // Hit rate limit - wait 60 seconds and retry
-      document.getElementById('price-status').textContent='Rate limit hit, waiting 60s... ('+(i+1)+'/'+syms.length+')';
-      await new Promise(function(r){setTimeout(r, 62000);});
-      p = await fetchPriceAV(syms[i]);
-    }
-    if (p && p !== 'LIMIT') { prices[norm(syms[i])]=p; got++; }
+    var p = await fetchPrice(syms[i]);
+    if (p && p !== 'LIMIT') { prices[norm(syms[i])]=p; }
     done++;
-    document.getElementById('price-status').textContent=got+' fetched... ('+(i+1)+'/'+syms.length+')';
-    renderHoldings();updateFamilyNav();
-    // Wait 13 seconds between calls to stay within 5/min limit
-    if (i < syms.length - 1) {
-      await new Promise(function(r){setTimeout(r, 13000);});
-    }
+    document.getElementById('price-status').textContent=done+'/'+syms.length+' fetched';
+    renderHoldings(); updateFamilyNav();
+    if (i < syms.length-1) await new Promise(function(r){setTimeout(r,13000);});
   }
-  document.getElementById('price-status').textContent=got+'/'+syms.length+' prices done';
-  btn.disabled=false;btn.textContent='Refresh prices';
-  renderHoldings();renderStats();updateFamilyNav();
-}
-
-// PARSE
-function parseZerodha(data){
-  var txns=[];var hi=-1;
-  for(var i=0;i<data.length;i++){var row=data[i];if(!row)continue;for(var j=0;j<row.length;j++){if(String(row[j]||'').trim()==='Symbol'){hi=i;break;}}if(hi>=0)break;}
-  if(hi<0)return txns;
-  var hdr=data[hi];var si=-1,di=-1,ti=-1,qi=-1,pi=-1;
-  for(var j=0;j<hdr.length;j++){var h=String(hdr[j]||'').toLowerCase().trim();if(h==='symbol')si=j;if(h==='trade date')di=j;if(h==='trade type')ti=j;if(h==='quantity')qi=j;if(h==='price')pi=j;}
-  if(si<0||qi<0||pi<0)return txns;
-  for(var i=hi+1;i<data.length;i++){
-    var r=data[i];if(!r||r.every(function(v){return v===null||v===undefined||v==='';} ))continue;
-    var sym=r[si];var date=r[di];var type=r[ti];
-    var qty=parseFloat(String(r[qi]||'').replace(/,/g,''))||0;
-    var price=parseFloat(String(r[pi]||'').replace(/,/g,''))||0;
-    if(!sym||!type||!qty||!price)continue;
-    var d=date instanceof Date?date:new Date(String(date));
-    if(isNaN(d.getTime()))d=new Date(String(date).replace(/-/g,'/'));
-    if(isNaN(d.getTime()))d=new Date();
-    txns.push({stock:norm(String(sym)),date:d,type:String(type).toLowerCase().indexOf('buy')>=0?'BUY':'SELL',qty:qty,price:price,value:qty*price});
-  }
-  return txns;
-}
-function parseHDFC(data){
-  var txns=[];var hi=-1;
-  for(var i=0;i<data.length;i++){if(String(data[i][0]||'').toLowerCase().indexOf('date')>=0){hi=i;break;}}
-  for(var i=hi>=0?hi+1:1;i<data.length;i++){
-    var r=data[i];var sym=r[1];var dateStr=r[0];var action=r[2];var qty=parseFloat(r[3])||0;var price=parseFloat(r[4])||0;
-    if(!sym||!dateStr||!action||!qty||!price)continue;
-    var d=new Date(dateStr);if(isNaN(d.getTime()))continue;
-    txns.push({stock:norm(String(sym)),date:d,type:String(action).toUpperCase().indexOf('BUY')>=0?'BUY':'SELL',qty:qty,price:price,value:qty*price});
-  }
-  return txns;
-}
-function parseICICI(data){
-  var txns=[];var hi=-1;
-  for(var i=0;i<data.length;i++){if(data[i][0]==='Name'){hi=i;break;}}
-  if(hi<0)return txns;
-  for(var i=hi+1;i<data.length;i++){
-    var r=data[i];var sym=r[0];var dateStr=r[1];var action=r[2];
-    var qty=parseFloat(r[5])||parseFloat(r[4])||0;
-    var price=parseFloat(String(r[7]||'').trim())||0;
-    if(!sym||!dateStr||!action||!qty||!price)continue;
-    var d=new Date(String(dateStr).replace(/-/g,' '));if(isNaN(d.getTime()))continue;
-    txns.push({stock:norm(String(sym)),date:d,type:String(action).toUpperCase().indexOf('BUY')>=0?'BUY':'SELL',qty:qty,price:price,value:qty*price});
-  }
-  return txns;
-}
-function readFile(file,broker){
-  return new Promise(function(resolve){
-    var reader=new FileReader();
-    reader.onload=function(e){
-      try{
-        var wb=XLSX.read(e.target.result,{type:'array',cellDates:true,raw:true});
-        var ws=wb.Sheets[wb.SheetNames[0]];
-        var data=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
-        var txns=[];
-        if(broker==='zerodha')txns=parseZerodha(data);
-        else if(broker==='hdfcsec')txns=parseHDFC(data);
-        else if(broker==='icicisec')txns=parseICICI(data);
-        else{
-          var flat=data.slice(0,15).map(function(row){return (row||[]).join(' ');}).join(' ').toLowerCase();
-          if(flat.indexOf('trade type')>=0)txns=parseZerodha(data);
-          else if(flat.indexOf('settlement')>=0)txns=parseHDFC(data);
-          else if(flat.indexOf('execution qty')>=0)txns=parseICICI(data);
-          else txns=parseZerodha(data);
-        }
-        resolve(txns);
-      }catch(e){console.error(e);resolve([]);}
-    };
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-// BUILD
-async function buildPortfolio(){
-  var allAccts=families.reduce(function(arr,f,fi){f.accounts.forEach(function(a,ai){arr.push(Object.assign({},a,{family:f.name,fi:fi,ai:ai}));});return arr;},[]);
-  var withFiles=allAccts.filter(function(a){return Object.keys(liveFiles).some(function(k){return k.indexOf(a.fi+'-'+a.ai+'-')===0;});});
-  if(!withFiles.length){alert('Please upload at least one broker statement');return;}
-  var btn=document.getElementById('build-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Building...';
-  var allTxns=[];
-  for(var ai=0;ai<withFiles.length;ai++){
-    var acct=withFiles[ai];
-    var keys=Object.keys(liveFiles).filter(function(k){return k.indexOf(acct.fi+'-'+acct.ai+'-')===0;});
-    for(var ki=0;ki<keys.length;ki++){
-      var file=liveFiles[keys[ki]];if(!file)continue;
-      var broker=acct.broker;
-      var fn=file.name.toLowerCase();
-      if(fn.indexOf('tradebook')>=0||fn.indexOf('zerodha')>=0)broker='zerodha';
-      else if(fn.indexOf('hdfc')>=0)broker='hdfcsec';
-      else if(fn.indexOf('icici')>=0||fn.indexOf('orderlog')>=0)broker='icicisec';
-      var txns=await readFile(file,broker);
-      var fam=acct.family;var aname=acct.name;
-      txns.forEach(function(t){allTxns.push(Object.assign({},t,{family:fam,account:aname,broker:broker}));});
-    }
-  }
-  var map={};
-  allTxns.forEach(function(t){
-    if(!map[t.stock])map[t.stock]={stock:t.stock,txns:[],accts:{},fams:{}};
-    map[t.stock].txns.push(t);
-    map[t.stock].accts[t.account+' ('+( BROKERS[t.broker]||t.broker)+')']=1;
-    map[t.stock].fams[t.family]=1;
-  });
-  holdings=[];
-  Object.values(map).forEach(function(s){
-    var sorted=s.txns.sort(function(a,b){return new Date(a.date)-new Date(b.date);});
-    var qty=0,cost=0;
-    sorted.forEach(function(t){if(t.type==='BUY'){qty+=t.qty;cost+=t.value;}else{var avg=qty>0?cost/qty:0;qty-=t.qty;cost=Math.max(0,qty*avg);}if(qty<0.001){qty=0;cost=0;}});
-    if(qty<0.001)return;
-    holdings.push({stock:s.stock,qty:qty,avgCost:qty>0?cost/qty:0,invested:cost,txns:sorted,accts:Object.keys(s.accts),fams:Object.keys(s.fams)});
-  });
-  goPortfolio('all',document.getElementById('nav-all'));
-  refreshPrices();
-  btn.disabled=false;btn.textContent='Build portfolio';
-}
-
-// RENDER
-function renderHoldings(){
-  var q=(document.getElementById('h-search')||{value:''}).value.toLowerCase();
-  var sort=(document.getElementById('h-sort')||{value:'value'}).value;
-  var data=holdings.filter(function(h){return(curFilter==='all'||h.fams.indexOf(curFilter)>=0)&&(!q||h.stock.toLowerCase().indexOf(q)>=0);});
-  var totalInv=data.reduce(function(s,h){return s+h.invested;},0);
-  var totVal=0,totPnl=0;
-  data=data.map(function(h){
-    var ltp=prices[norm(h.stock)];
-    var val=ltp?h.qty*ltp.price:h.invested;
-    var pnl=ltp?val-h.invested:0;
-    var pnlPct=h.invested>0?pnl/h.invested*100:0;
-    var weight=totalInv>0?h.invested/totalInv*100:0;
-    var xirr=stockXIRR(h.txns,val);
-    totVal+=val;totPnl+=pnl;
-    return Object.assign({},h,{ltp:ltp,val:val,pnl:pnl,pnlPct:pnlPct,weight:weight,xirr:xirr});
-  });
-  data.sort(function(a,b){
-    if(sort==='stock')return a.stock.localeCompare(b.stock);
-    if(sort==='pnl')return b.pnl-a.pnl;if(sort==='pnlpct')return b.pnlPct-a.pnlPct;
-    if(sort==='weight')return b.weight-a.weight;if(sort==='xirr')return(b.xirr||0)-(a.xirr||0);
-    return b.val-a.val;
-  });
-  var rows=data.map(function(h){
-    var ltpHtml=h.ltp?('<div class="mono" style="font-weight:500">Rs'+h.ltp.price.toFixed(1)+'</div><div class="price-pill '+(h.ltp.changeP>=0?'up':'dn')+'">'+fmtP(h.ltp.changeP)+'</div>'):'<span class="price-pill na">--</span>';
-    var pnlHtml=h.ltp?(h.pnl>=0?'+':'')+'Rs'+fmt(Math.abs(h.pnl)):'--';
-    var pnlPctHtml=h.ltp?fmtP(h.pnlPct):'--';
-    var xirrHtml=h.xirr!=null?(h.xirr*100).toFixed(1)+'%':'--';
-    var wbar='<div style="display:flex;align-items:center;gap:5px"><span class="mono">'+h.weight.toFixed(1)+'%</span><div class="wbar-bg"><div class="wbar" style="width:'+Math.min(h.weight*4,100)+'%"></div></div></div>';
-    return '<tr class="clickable">'+
-      '<td><strong onclick="showTxns(\''+h.stock+'\')" style="cursor:pointer">'+h.stock+'</strong> <button onclick="deleteStock(\''+h.stock+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:1px 4px;border-radius:3px;vertical-align:middle" title="Remove from portfolio">✕</button></td>'+
-      '<td class="mono">'+h.qty.toFixed(0)+'</td>'+
-      '<td class="mono">Rs'+h.avgCost.toFixed(1)+'</td>'+
-      '<td>'+ltpHtml+'</td>'+
-      '<td class="mono" style="font-weight:500">Rs'+fmt(h.val)+'</td>'+
-      '<td>'+wbar+'</td>'+
-      '<td class="mono '+(h.pnl>=0?'pos':'neg')+'">'+pnlHtml+'</td>'+
-      '<td class="mono '+(h.pnlPct>=0?'pos':'neg')+'">'+pnlPctHtml+'</td>'+
-      '<td class="mono '+((h.xirr||0)>=0?'pos':'neg')+'">'+xirrHtml+'</td>'+
-      '<td style="font-size:11px;color:var(--text3)">'+h.accts.join(', ')+'</td>'+
-      '</tr>';
-  });
-  document.getElementById('h-body').innerHTML=rows.join('');
-  renderStats(data,totalInv,totVal,totPnl);
-}
-function renderStats(data,totalInv,totVal,totPnl){
-  if(!data){
-    var d=holdings.filter(function(h){return curFilter==='all'||h.fams.indexOf(curFilter)>=0;});
-    var ti=d.reduce(function(s,h){return s+h.invested;},0);
-    var tv=0,tp=0;
-    d.forEach(function(h){var p=prices[norm(h.stock)];var v=p?h.qty*p.price:h.invested;tv+=v;tp+=p?v-h.invested:0;});
-    renderStats(d,ti,tv,tp);return;
-  }
-  var pnlPct=totalInv>0?totPnl/totalInv*100:0;
-  var px=portXIRR(data);
-  var pxStr=px!=null?(px>=0?'+':'')+(px*100).toFixed(1)+'%':'--';
-  var pxClass=px!=null?(px>=0?'pos':'neg'):'';
-  var html='<div class="stat-box"><div class="stat-n">Rs'+fmt(totalInv)+'</div><div class="stat-l">Invested</div></div>';
-  html+='<div class="stat-box"><div class="stat-n">Rs'+fmt(totVal)+'</div><div class="stat-l">Current value</div></div>';
-  html+='<div class="stat-box"><div class="stat-n '+(totPnl>=0?'pos':'neg')+'">'+(totPnl>=0?'+':'')+'Rs'+fmt(Math.abs(totPnl))+'</div><div class="stat-l">Total P&L</div></div>';
-  html+='<div class="stat-box"><div class="stat-n '+(pnlPct>=0?'pos':'neg')+'">'+(pnlPct>=0?'+':'')+pnlPct.toFixed(1)+'%</div><div class="stat-l">Return</div></div>';
-  html+='<div class="stat-box"><div class="stat-n '+pxClass+'">'+pxStr+'</div><div class="stat-l">Portfolio XIRR</div></div>';
-  html+='<div class="stat-box"><div class="stat-n">'+data.length+'</div><div class="stat-l">Holdings</div></div>';
-  document.getElementById('port-stats').innerHTML=html;
-}
-
-// TXN MODAL
-function showTxns(stock){
-  var h=holdings.find(function(x){return x.stock===stock;});if(!h)return;
-  var ltp=prices[norm(stock)];var val=ltp?h.qty*ltp.price:h.invested;
-  var pnl=ltp?val-h.invested:0;var xirr=stockXIRR(h.txns,val);
-  document.getElementById('txn-title').textContent=stock+(ltp?' - Rs'+ltp.price.toFixed(1):'');
-  var statsHtml='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem">';
-  statsHtml+='<div class="stat-box"><div class="stat-n mono">'+h.qty.toFixed(0)+'</div><div class="stat-l">Qty</div></div>';
-  statsHtml+='<div class="stat-box"><div class="stat-n mono">Rs'+h.avgCost.toFixed(1)+'</div><div class="stat-l">Avg cost</div></div>';
-  statsHtml+='<div class="stat-box"><div class="stat-n mono '+(pnl>=0?'pos':'neg')+'">'+(ltp?(pnl>=0?'+':'')+'Rs'+fmt(Math.abs(pnl)):'--')+'</div><div class="stat-l">P&L</div></div>';
-  statsHtml+='<div class="stat-box"><div class="stat-n mono '+((xirr||0)>=0?'pos':'neg')+'">'+(xirr!=null?(xirr*100).toFixed(1)+'%':'--')+'</div><div class="stat-l">XIRR</div></div></div>';
-  var infoHtml='<div style="font-size:11px;color:var(--text3);margin-bottom:.875rem">Families: '+h.fams.join(', ')+' | Accounts: '+h.accts.join(', ')+'</div>';
-  var rows=h.txns.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);}).map(function(t){
-    return '<tr><td class="mono">'+new Date(t.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})+'</td>'+'<td><span class="badge '+(t.type==='BUY'?'badge-green':'badge-red')+'">'+t.type+'</span></td>'+'<td class="mono">'+t.qty.toFixed(0)+'</td><td class="mono">Rs'+parseFloat(t.price).toFixed(2)+'</td><td class="mono">Rs'+fmt(t.value)+'</td><td style="font-size:11px;color:var(--text3)">'+( t.account||'--')+'</td></tr>';
-  });
-  document.getElementById('txn-body').innerHTML=statsHtml+infoHtml+'<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Qty</th><th>Price</th><th>Value</th><th>Account</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
-  document.getElementById('txn-modal').classList.add('open');
-}
-
-// NAVIGATION
-function goSection(name,el){
-  document.querySelectorAll('.nav-item').forEach(function(e){e.classList.remove('active');});
-  document.querySelectorAll('.section').forEach(function(e){e.classList.remove('active');});
-  if(el)el.classList.add('active');
-  document.getElementById('section-'+name).classList.add('active');
-  if(name==='setup')renderFamilies();
-}
-function goPortfolio(filter,el){
-  document.querySelectorAll('.nav-item').forEach(function(e){e.classList.remove('active');});
-  document.querySelectorAll('.section').forEach(function(e){e.classList.remove('active');});
-  if(el)el.classList.add('active');
-  curFilter=filter;
-  document.getElementById('section-portfolio').classList.add('active');
-  var f=families.find(function(x){return x.name===filter;});
-  document.getElementById('port-title').textContent=filter==='all'?'All families - consolidated':filter;
-  document.getElementById('port-sub').textContent=filter==='all'?families.length+' famil'+(families.length!==1?'ies':'y'):(f?f.accounts.length+' account'+(f.accounts.length!==1?'s':''):'');
-  if(holdings.length)renderHoldings();
-  else document.getElementById('h-body').innerHTML='<tr><td colspan="10" style="text-align:center;padding:2.5rem;color:var(--text3)">Go to Setup and build portfolio first</td></tr>';
-}
-function updateFamilyNav(){
-  var html=families.map(function(f){
-    var fh=holdings.filter(function(h){return h.fams.indexOf(f.name)>=0;});
-    var xirr=fh.length?portXIRR(fh):null;
-    var badge=xirr!=null?'<span style="font-size:10px;padding:1px 6px;border-radius:3px;background:'+(xirr>=0?'var(--gdim)':'var(--rdim)')+';color:'+(xirr>=0?'var(--gtxt)':'var(--red)')+'">'+(xirr>=0?'+':'')+(xirr*100).toFixed(1)+'%</span>':'';
-    return '<div class="nav-item nav-sub" onclick="goPortfolio(\''+ f.name +'\',this)" style="justify-content:space-between"><div class="nav-left"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>'+f.name+'</div>'+badge+'</div>';
-  }).join('');
-  document.getElementById('fam-nav').innerHTML=html;
+  var got=Object.keys(prices).length;
+  document.getElementById('price-status').textContent=got+'/'+syms.length+' prices';
+  btn.disabled=false; btn.textContent='Refresh prices';
+  renderHoldings(); renderStats(); updateFamilyNav();
 }
 
 // FAMILY MGMT
