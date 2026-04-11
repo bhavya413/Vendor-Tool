@@ -902,6 +902,16 @@ function saveApiKey(val){
 }
 
 // INIT
+function saveTDKey(val){
+  var v=val.trim(); TD_KEY=v;
+  if(v){localStorage.setItem('td_key',v);document.getElementById('td-status').textContent='Saved';document.getElementById('td-status').style.color='var(--gtxt)';}
+  else{localStorage.removeItem('td_key');document.getElementById('td-status').textContent='Not set';document.getElementById('td-status').style.color='var(--text3)';}
+}
+function saveAVKey(val){
+  var v=val.trim(); AV_KEY=v;
+  if(v){localStorage.setItem('av_key',v);document.getElementById('av-status').textContent='Saved';document.getElementById('av-status').style.color='var(--gtxt)';}
+  else{localStorage.removeItem('av_key');document.getElementById('av-status').textContent='Not set';document.getElementById('av-status').style.color='var(--text3)';}
+}
 function init(){
   var tdSaved=localStorage.getItem('td_key');
   if(tdSaved){TD_KEY=tdSaved;if(document.getElementById('td-key-input')){document.getElementById('td-key-input').value=tdSaved;document.getElementById('td-status').textContent='Saved';document.getElementById('td-status').style.color='var(--gtxt)';}}
