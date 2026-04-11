@@ -142,7 +142,13 @@ tbody tr.clickable{cursor:pointer}
     <div class="nav-left"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Report Builder</div>
   </div>
   <div class="apikey-box">
-    <div class="apikey-label">API Key</div>
+    <div class="apikey-label">Twelve Data Key <span style="font-weight:400;text-transform:none;font-size:9px">(prices)</span></div>
+    <input class="apikey-input" type="text" id="td-key-input" placeholder="your twelvedata key" oninput="saveTDKey(this.value)">
+    <div class="apikey-status" id="td-status">Not set</div>
+    <div class="apikey-label" style="margin-top:.6rem">Alpha Vantage Key <span style="font-weight:400;text-transform:none;font-size:9px">(fallback)</span></div>
+    <input class="apikey-input" type="text" id="av-key-input" placeholder="e.g. 1ACFSCGL9SOGBPHL" oninput="saveAVKey(this.value)">
+    <div class="apikey-status" id="av-status">Not set</div>
+    <div class="apikey-label" style="margin-top:.6rem">Anthropic API Key</div>
     <input class="apikey-input" type="password" id="api-key-input" placeholder="sk-ant-api03-..." oninput="saveApiKey(this.value)">
     <div class="apikey-status" id="api-status">Not set</div>
   </div>
@@ -897,6 +903,8 @@ function saveApiKey(val){
 
 // INIT
 function init(){
+  var tdSaved=localStorage.getItem('td_key');
+  if(tdSaved){TD_KEY=tdSaved;if(document.getElementById('td-key-input')){document.getElementById('td-key-input').value=tdSaved;document.getElementById('td-status').textContent='Saved';document.getElementById('td-status').style.color='var(--gtxt)';}}
   const saved=localStorage.getItem('inv_api_key');
   if(saved){document.getElementById('api-key-input').value=saved;document.getElementById('api-status').textContent='Saved';document.getElementById('api-status').style.color='var(--gtxt)';}
   renderFamilies();
