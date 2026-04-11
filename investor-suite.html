@@ -145,6 +145,7 @@ tbody tr.clickable{cursor:pointer}
     <div class="apikey-label">Twelve Data Key <span style="font-weight:400;text-transform:none;font-size:9px">(prices)</span></div>
     <input class="apikey-input" type="text" id="td-key-input" placeholder="your twelvedata key" oninput="saveTDKey(this.value)">
     <div class="apikey-status" id="td-status">Not set</div>
+    <button onclick="testTDKey()" style="margin-top:4px;width:100%;padding:5px;font-size:11px;background:var(--gdim);border:1px solid var(--green);border-radius:var(--rsm);color:var(--gtxt);cursor:pointer;font-family:inherit">Test prices</button>
     <div class="apikey-label" style="margin-top:.6rem">Alpha Vantage Key <span style="font-weight:400;text-transform:none;font-size:9px">(fallback)</span></div>
     <input class="apikey-input" type="text" id="av-key-input" placeholder="e.g. 1ACFSCGL9SOGBPHL" oninput="saveAVKey(this.value)">
     <div class="apikey-status" id="av-status">Not set</div>
@@ -902,6 +903,24 @@ function saveApiKey(val){
 }
 
 // INIT
+async function testTDKey(){
+  if(!TD_KEY){alert('Paste your Twelve Data key first');return;}
+  document.getElementById('td-status').textContent='Testing...';
+  try{
+    var r=await fetch('https://api.twelvedata.com/price?symbol=RELIANCE&exchange=NSE&apikey='+TD_KEY,{signal:AbortSignal.timeout(10000)});
+    var j=await r.json();
+    if(j.price){
+      document.getElementById('td-status').textContent='Working! RELIANCE=Rs'+parseFloat(j.price).toFixed(1);
+      document.getElementById('td-status').style.color='var(--gtxt)';
+    } else {
+      document.getElementById('td-status').textContent='Error: '+(j.message||j.code||'No data');
+      document.getElementById('td-status').style.color='var(--red)';
+    }
+  }catch(e){
+    document.getElementById('td-status').textContent='Failed: '+e.message;
+    document.getElementById('td-status').style.color='var(--red)';
+  }
+}
 function saveTDKey(val){
   var v=val.trim(); TD_KEY=v;
   if(v){localStorage.setItem('td_key',v);document.getElementById('td-status').textContent='Saved';document.getElementById('td-status').style.color='var(--gtxt)';}
